@@ -1,7 +1,7 @@
 package com.algorigo.in_app_updater
 
 import android.app.Activity
-import com.algorigo.in_app_updater.exception.InAppUpdateException
+import com.algorigo.in_app_updater.exceptions.InAppUpdateException
 import com.google.android.play.core.appupdate.AppUpdateInfo
 import com.google.android.play.core.appupdate.AppUpdateManager
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory
@@ -32,21 +32,15 @@ internal class InAppUpdateManager(
     }
   }
 
-  suspend fun checkForUpdate(): AppUpdateInfo = suspendCoroutine { continuation ->
+  suspend fun checkForUpdate(): InAppUpdateInfo = suspendCoroutine { continuation ->
     try {
       appUpdateManager.appUpdateInfo.addOnSuccessListener { appUpdateInfo ->
-        currentInAppUpdateInfo = currentInAppUpdateInfo.copy(appUpdateInfo = appUpdateInfo)
-        if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
-          && appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)
-        ) {
-          startUpdate()
-        }
-        continuation.resume(appUpdateInfo)
+        continuation.resume(InAppUpdateInfo(appUpdateInfo))
       }.addOnFailureListener {
-        continuation.resumeWithException(InAppUpdateException.FetchAppUpdateInfoFailedException(it.message))
+        continuation.resumeWithException(InAppUpdateException.CheckForUpdateFailedException(message = it.message))
       }
     } catch (e: Exception) {
-      continuation.resumeWithException(InAppUpdateException.UnExpectedException(e.message))
+      continuation.resumeWithException(InAppUpdateException.UnExpectedException(message = e.message))
     }
   }
 
