@@ -1,16 +1,15 @@
 package com.algorigo.in_app_updater
 
 import android.app.Activity
+import com.algorigo.in_app_updater.InAppUpdateType.Companion.REQUEST_CODE_FLEXIBLE_UPDATE
+import com.algorigo.in_app_updater.InAppUpdateType.Companion.REQUEST_CODE_IMMEDIATE_UPDATE
+import com.algorigo.in_app_updater.callbacks.OnActivityResultListener
 import com.algorigo.in_app_updater.exceptions.InAppUpdateException
-import com.google.android.play.core.appupdate.AppUpdateInfo
 import com.google.android.play.core.appupdate.AppUpdateManager
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory
 import com.google.android.play.core.appupdate.AppUpdateOptions
 import com.google.android.play.core.install.InstallStateUpdatedListener
 import com.google.android.play.core.install.model.AppUpdateType
-import com.google.android.play.core.install.model.InstallStatus
-import com.google.android.play.core.install.model.UpdateAvailability
-import com.google.android.play.core.ktx.installStatus
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.callbackFlow
 import kotlin.coroutines.resume
@@ -23,7 +22,8 @@ internal class InAppUpdateManager(
 
   private val appUpdateManager: AppUpdateManager = AppUpdateManagerFactory.create(activity)
 
-  private var currentInAppUpdateInstallState = InAppUpdateInstallState()
+  var onActivityResultListener: OnActivityResultListener? = null
+    private set
 
   suspend fun checkUpdateAvailable() = suspendCoroutine {
     // re-fetch app update info
@@ -44,7 +44,42 @@ internal class InAppUpdateManager(
     }
   }
 
-  fun observeInAppUpdateStatus() = callbackFlow {
+  suspend fun startUpdate(inAppUpdateType: InAppUpdateType = InAppUpdateType.IMMEDIATE): InAppActivityResult {
+
+    val inAppUpdateInfo = checkForUpdate()
+
+    return suspendCoroutine { continuation ->
+      val listener = OnActivityResultListener { activityResult ->
+        continuation.resume(activityResult)
+      }
+
+      setOnActivityResultListener(listener)
+
+      when (inAppUpdateType) {
+        InAppUpdateType.IMMEDIATE -> {
+          if (inAppUpdateInfo.isImmediateUpdateAllowed) {
+            val updateOptions = AppUpdateOptions.newBuilder(AppUpdateType.IMMEDIATE).build()
+            appUpdateManager.startUpdateFlowForResult(
+              inAppUpdateInfo.appUpdateInfo, activity, updateOptions, REQUEST_CODE_IMMEDIATE_UPDATE
+            )
+          } else {
+            continuation.resumeWithException(InAppUpdateException.ImmediateUpdateNotAllowedException(message = "Immediate update not allowed"))
+          }
+        }
+
+        InAppUpdateType.FLEXIBLE -> {
+          if (inAppUpdateInfo.isFlexibleUpdateAllowed) {
+            val updateOptions = AppUpdateOptions.newBuilder(AppUpdateType.FLEXIBLE).build()
+            appUpdateManager.startUpdateFlowForResult(
+              inAppUpdateInfo.appUpdateInfo, activity, updateOptions, REQUEST_CODE_FLEXIBLE_UPDATE
+            )
+          } else {
+            continuation.resumeWithException(InAppUpdateException.FlexibleUpdateNotAllowedException(message = "Flexible update not allowed"))
+          }
+        }
+      }
+    }
+  }
     val installStateUpdatedListener = InstallStateUpdatedListener { installState ->
       if (currentInAppUpdateInstallState.installState?.installStatus() != installState.installStatus()) {
         currentInAppUpdateInstallState = currentInAppUpdateInstallState.copy(installState = installState)
@@ -63,18 +98,7 @@ internal class InAppUpdateManager(
     }
   }
 
-  fun startUpdate(updateType: Int = AppUpdateType.IMMEDIATE) {
-    // re-fetch app update info
-    appUpdateManager.appUpdateInfo.addOnSuccessListener { appUpdateInfo ->
-      currentInAppUpdateInfo = currentInAppUpdateInfo.copy(appUpdateInfo = appUpdateInfo)
-
-      val updateOptions = AppUpdateOptions.newBuilder(updateType).build()
-      appUpdateManager.startUpdateFlowForResult(
-        appUpdateInfo, activity, updateOptions, REQUEST_CODE_UPDATE
-      )
-    }
-  }
-  companion object {
-    const val REQUEST_CODE_UPDATE = 5793
+  private fun setOnActivityResultListener(onActivityResultListener: OnActivityResultListener?) {
+    this.onActivityResultListener = onActivityResultListener
   }
 }
