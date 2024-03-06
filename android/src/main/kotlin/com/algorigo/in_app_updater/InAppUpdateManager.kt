@@ -11,6 +11,7 @@ import com.google.android.play.core.appupdate.AppUpdateOptions
 import com.google.android.play.core.install.InstallStateUpdatedListener
 import com.google.android.play.core.install.model.AppUpdateType
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -80,14 +81,12 @@ internal class InAppUpdateManager(
       }
     }
   }
-    val installStateUpdatedListener = InstallStateUpdatedListener { installState ->
-      if (currentInAppUpdateInstallState.installState?.installStatus() != installState.installStatus()) {
-        currentInAppUpdateInstallState = currentInAppUpdateInstallState.copy(installState = installState)
-        trySend(currentInAppUpdateInfo)
 
-        if (installState.installStatus == InstallStatus.DOWNLOADED) {
-          close()
-        }
+  fun observeInAppUpdateInstallState(): Flow<InAppUpdateInstallState> = callbackFlow {
+    val installStateUpdatedListener = InstallStateUpdatedListener { installState ->
+      val currentInAppUpdateInstallState = InAppUpdateInstallState(installState)
+      if (currentInAppUpdateInstallState.installState.installStatus() != installState.installStatus()) {
+        trySend(currentInAppUpdateInstallState)
       }
     }
 
