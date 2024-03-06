@@ -23,14 +23,12 @@ internal class InAppUpdateManager(
 
   private val appUpdateManager: AppUpdateManager = AppUpdateManagerFactory.create(activity)
 
-  private var currentInAppUpdateInfo = InAppUpdateInfo()
   private var currentInAppUpdateInstallState = InAppUpdateInstallState()
 
   suspend fun checkUpdateAvailable() = suspendCoroutine {
     // re-fetch app update info
     appUpdateManager.appUpdateInfo.addOnSuccessListener { appUpdateInfo ->
-      currentInAppUpdateInfo = currentInAppUpdateInfo.copy(appUpdateInfo = appUpdateInfo)
-      it.resume(currentInAppUpdateInfo.isUpdateAvailable())
+      it.resume(InAppUpdateInfo(appUpdateInfo).isUpdateAvailable())
     }
   }
 
