@@ -13,4 +13,12 @@ class InAppUpdater {
   Future<bool?> checkUpdateAvailable() {
     return InAppUpdaterPlatform.instance.checkUpdateAvailable();
   }
+
+  Future<void> startUpdateImmediate() {
+    return InAppUpdaterPlatform.instance.startUpdateImmediate();
+  }
+
+  Future<void> startUpdateFlexible() {
+    return InAppUpdaterPlatform.instance.startUpdateFlexible();
+  }
 }

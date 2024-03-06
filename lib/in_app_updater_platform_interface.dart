@@ -34,4 +34,12 @@ abstract class InAppUpdaterPlatform extends PlatformInterface {
   Future<bool?> checkUpdateAvailable() {
     throw UnimplementedError('checkUpdateAvailable() has not been implemented.');
   }
+
+  Future<void> startUpdateImmediate() {
+    throw UnimplementedError('startUpdateImmediate() has not been implemented.');
+  }
+
+  Future<void> startUpdateFlexible() {
+    throw UnimplementedError('startUpdateFlexible() has not been implemented.');
+  }
 }

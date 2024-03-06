@@ -26,4 +26,14 @@ class MethodChannelInAppUpdater extends InAppUpdaterPlatform {
     final updateAvailable = await methodChannel.invokeMethod<bool>('checkUpdateAvailable');
     return updateAvailable;
   }
+
+  @override
+  Future<void> startUpdateImmediate() async {
+    return await methodChannel.invokeMethod('startUpdateImmediate');
+  }
+
+  @override
+  Future<void> startUpdateFlexible() async {
+    return await methodChannel.invokeMethod('startUpdateFlexible');
+  }
 }
