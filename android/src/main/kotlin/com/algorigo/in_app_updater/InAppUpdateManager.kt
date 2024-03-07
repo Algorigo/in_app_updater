@@ -56,6 +56,10 @@ internal class InAppUpdateManager(
 
       setOnActivityResultListener(listener)
 
+      if (inAppUpdateInfo.isUpdateAvailable().not()) {
+        continuation.resumeWithException(InAppUpdateException.UpdateNotAvailableException(message = "Update not available"))
+      }
+
       when (inAppUpdateType) {
         InAppUpdateType.IMMEDIATE -> {
           if (inAppUpdateInfo.isImmediateUpdateAllowed) {

@@ -7,6 +7,8 @@ sealed class InAppUpdateException(
 
   data class UnExpectedException(override val code: Int = UNEXPECTED_EXCEPTION_CODE, override val message: String?) : InAppUpdateException(code, message)
 
+  data class UpdateNotAvailableException(override val code: Int = UPDATE_NOT_AVAILABLE_EXCEPTION_CODE, override val message: String?) : InAppUpdateException(code, message)
+
   data class CheckForUpdateFailedException(override val code: Int = CHECK_FOR_UPDATE_FAILED_EXCEPTION_CODE, override val message: String?) : InAppUpdateException(code, message)
 
   data class ImmediateUpdateNotAllowedException(override val code: Int = IMMEDIATE_UPDATE_NOT_ALLOWED_EXCEPTION_CODE, override val message: String?) : InAppUpdateException(code, message)
@@ -21,9 +23,10 @@ sealed class InAppUpdateException(
 
   companion object {
     const val UNEXPECTED_EXCEPTION_CODE = 5701
-    const val CHECK_FOR_UPDATE_FAILED_EXCEPTION_CODE = 5702
-    const val IMMEDIATE_UPDATE_NOT_ALLOWED_EXCEPTION_CODE = 5703
-    const val FLEXIBLE_UPDATE_NOT_ALLOWED_EXCEPTION_CODE = 5704
-    const val COMPLETE_FLEXIBLE_UPDATE_EXCEPTION_CODE = 5705
+    const val UPDATE_NOT_AVAILABLE_EXCEPTION_CODE = 5702
+    const val CHECK_FOR_UPDATE_FAILED_EXCEPTION_CODE = 5703
+    const val IMMEDIATE_UPDATE_NOT_ALLOWED_EXCEPTION_CODE = 5704
+    const val FLEXIBLE_UPDATE_NOT_ALLOWED_EXCEPTION_CODE = 5705
+    const val COMPLETE_FLEXIBLE_UPDATE_EXCEPTION_CODE = 5706
   }
 }
