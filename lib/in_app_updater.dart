@@ -25,4 +25,8 @@ class InAppUpdater {
   Future<void> completeFlexibleUpdate() {
     return InAppUpdaterPlatform.instance.completeFlexibleUpdate();
   }
+
+  Stream<dynamic> observeInAppUpdateInstallState() {
+    return InAppUpdaterPlatform.instance.observeInAppUpdateInstallState();
+  }
 }

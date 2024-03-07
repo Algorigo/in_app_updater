@@ -9,6 +9,9 @@ class MethodChannelInAppUpdater extends InAppUpdaterPlatform {
   @visibleForTesting
   final methodChannel = const MethodChannel('in_app_updater');
 
+  @visibleForTesting
+  final eventChannel = const EventChannel('in_app_updater_event');
+
   @override
   Future<String?> getPlatformVersion() async {
     final version = await methodChannel.invokeMethod<String>('getPlatformVersion');
@@ -40,5 +43,10 @@ class MethodChannelInAppUpdater extends InAppUpdaterPlatform {
   @override
   Future<void> completeFlexibleUpdate() async {
     return await methodChannel.invokeMethod('completeFlexibleUpdate');
+  }
+
+  @override
+  Stream<dynamic> observeInAppUpdateInstallState() {
+    return eventChannel.receiveBroadcastStream();
   }
 }

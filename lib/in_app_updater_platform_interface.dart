@@ -46,4 +46,8 @@ abstract class InAppUpdaterPlatform extends PlatformInterface {
   Future<void> completeFlexibleUpdate() {
     throw UnimplementedError('completeFlexibleUpdate() has not been implemented.');
   }
+
+  Stream<dynamic> observeInAppUpdateInstallState() {
+    throw UnimplementedError('observeInAppUpdateInstallState() has not been implemented.');
+  }
 }
