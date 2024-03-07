@@ -97,6 +97,14 @@ internal class InAppUpdateManager(
     }
   }
 
+  fun completeFlexibleUpdate() {
+    try {
+      appUpdateManager.completeUpdate()
+    } catch (e: Exception) {
+      throw InAppUpdateException.CompleteFlexibleUpdateException(message = e.message)
+    }
+  }
+
   private fun setOnActivityResultListener(onActivityResultListener: OnActivityResultListener?) {
     this.onActivityResultListener = onActivityResultListener
   }

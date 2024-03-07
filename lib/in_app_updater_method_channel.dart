@@ -36,4 +36,9 @@ class MethodChannelInAppUpdater extends InAppUpdaterPlatform {
   Future<void> startUpdateFlexible() async {
     return await methodChannel.invokeMethod('startUpdateFlexible');
   }
+
+  @override
+  Future<void> completeFlexibleUpdate() async {
+    return await methodChannel.invokeMethod('completeFlexibleUpdate');
+  }
 }

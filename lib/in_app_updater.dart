@@ -21,4 +21,8 @@ class InAppUpdater {
   Future<void> startUpdateFlexible() {
     return InAppUpdaterPlatform.instance.startUpdateFlexible();
   }
+
+  Future<void> completeFlexibleUpdate() {
+    return InAppUpdaterPlatform.instance.completeFlexibleUpdate();
+  }
 }

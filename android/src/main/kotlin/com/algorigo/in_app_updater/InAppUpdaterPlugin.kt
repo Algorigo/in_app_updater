@@ -57,22 +57,6 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, EventChannel.Stream
     eventChannel.setStreamHandler(this)
   }
 
-  override fun onMethodCall(call: MethodCall, result: Result) {
-    when (call.method) {
-      "getPlatformVersion" -> {
-        result.success("Android ${android.os.Build.VERSION.RELEASE}")
-      }
-
-      "checkForUpdate" -> checkForUpdate(result)
-      "checkUpdateAvailable" -> checkUpdateAvailable(result)
-      "startUpdateImmediate" -> startUpdateFlexible(result)
-      "startUpdateFlexible" -> startUpdateImmediate(result)
-      else -> {
-        result.notImplemented()
-      }
-    }
-  }
-
   override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
     methodChannel.setMethodCallHandler(null)
   }
@@ -158,7 +142,7 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, EventChannel.Stream
           RESULT_OK -> {
             result?.success(Unit)
           }
-          
+
           RESULT_CANCELED -> {
             result?.error(
               OnActivityResultException.FLEXIBLE_UPDATE_CANCELED_EXCEPTION.code.toString(),
@@ -239,7 +223,7 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, EventChannel.Stream
     }
   }
 
-  private fun startUpdateImmediate(result: Result) {
+  private fun startUpdateFlexible(result: Result) {
     mainScope.launch {
       try {
         lastResult = result
@@ -251,6 +235,17 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, EventChannel.Stream
       } catch (e: Exception) {
         result.error(e.message.toString(), e.cause.toString(), null)
       }
+    }
+  }
+
+  private fun completeFlexibleUpdate(result: Result) {
+    try {
+      inAppUpdateManager?.completeFlexibleUpdate()
+      result.success(Unit)
+    } catch (e: InAppUpdateException) {
+      result.error(e.code.toString(), e.message, e.stackTrace)
+    } catch (e: Exception) {
+      result.error(e.message.toString(), e.cause.toString(), null)
     }
   }
 

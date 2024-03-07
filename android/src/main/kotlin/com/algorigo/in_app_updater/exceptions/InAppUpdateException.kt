@@ -13,6 +13,8 @@ sealed class InAppUpdateException(
 
   data class FlexibleUpdateNotAllowedException(override val code: Int = FLEXIBLE_UPDATE_NOT_ALLOWED_EXCEPTION_CODE, override val message: String?) : InAppUpdateException(code, message)
 
+  data class CompleteFlexibleUpdateException(override val code: Int = COMPLETE_FLEXIBLE_UPDATE_EXCEPTION_CODE, override val message: String?) : InAppUpdateException(code, message)
+
   override fun toString(): String {
     return "${this.javaClass.simpleName} message=$message"
   }
@@ -21,6 +23,7 @@ sealed class InAppUpdateException(
     const val UNEXPECTED_EXCEPTION_CODE = 5701
     const val CHECK_FOR_UPDATE_FAILED_EXCEPTION_CODE = 5702
     const val IMMEDIATE_UPDATE_NOT_ALLOWED_EXCEPTION_CODE = 5703
-    const val FLEXIBLE_UPDATE_NOT_ALLOWED_EXCEPTION_CODE = 5703
+    const val FLEXIBLE_UPDATE_NOT_ALLOWED_EXCEPTION_CODE = 5704
+    const val COMPLETE_FLEXIBLE_UPDATE_EXCEPTION_CODE = 5705
   }
 }
