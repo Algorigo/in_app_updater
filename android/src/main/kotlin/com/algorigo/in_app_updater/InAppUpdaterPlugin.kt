@@ -10,6 +10,8 @@ import com.algorigo.in_app_updater.exceptions.InAppUpdateException
 import com.algorigo.in_app_updater.exceptions.OnActivityResultException
 import com.algorigo.in_app_updater.InAppUpdateType.Companion.REQUEST_CODE_IMMEDIATE_UPDATE
 import com.algorigo.in_app_updater.InAppUpdateType.Companion.REQUEST_CODE_FLEXIBLE_UPDATE
+import com.algorigo.in_app_updater.impl.InAppUpdateManagerImpl
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory
 import com.google.android.play.core.appupdate.AppUpdateOptions
 import com.google.android.play.core.install.model.ActivityResult
 import com.google.android.play.core.install.model.AppUpdateType
@@ -63,7 +65,7 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, EventChannel.Stream
 
   override fun onAttachedToActivity(binding: ActivityPluginBinding) {
     activity = binding.activity
-    inAppUpdateManager = InAppUpdateManager(activity!!)
+    inAppUpdateManager = InAppUpdateManagerImpl(binding.activity, AppUpdateManagerFactory.create(binding.activity))
   }
 
   override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {

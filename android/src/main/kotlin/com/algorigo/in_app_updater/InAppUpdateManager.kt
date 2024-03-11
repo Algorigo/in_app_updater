@@ -17,102 +17,22 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
-internal class InAppUpdateManager(
-  private val activity: Activity
-) {
-
-  private val appUpdateManager: AppUpdateManager = AppUpdateManagerFactory.create(activity)
+abstract class InAppUpdateManager {
 
   var onActivityResultListener: OnActivityResultListener? = null
     private set
 
-  suspend fun checkUpdateAvailable() = suspendCoroutine {
-    // re-fetch app update info
-    appUpdateManager.appUpdateInfo.addOnSuccessListener { appUpdateInfo ->
-      it.resume(InAppUpdateInfo(appUpdateInfo).isUpdateAvailable())
-    }
-  }
+  abstract suspend fun checkUpdateAvailable(): Boolean
 
-  suspend fun checkForUpdate(): InAppUpdateInfo = suspendCoroutine { continuation ->
-    try {
-      appUpdateManager.appUpdateInfo.addOnSuccessListener { appUpdateInfo ->
-        continuation.resume(InAppUpdateInfo(appUpdateInfo))
-      }.addOnFailureListener {
-        continuation.resumeWithException(InAppUpdateException.CheckForUpdateFailedException(message = it.message))
-      }
-    } catch (e: Exception) {
-      continuation.resumeWithException(InAppUpdateException.UnExpectedException(message = e.message))
-    }
-  }
+  abstract suspend fun checkForUpdate(): InAppUpdateInfo
 
-  suspend fun startUpdate(inAppUpdateType: InAppUpdateType = InAppUpdateType.IMMEDIATE): InAppActivityResult {
+  abstract suspend fun startUpdate(inAppUpdateType: InAppUpdateType = InAppUpdateType.IMMEDIATE): InAppActivityResult
 
-    val inAppUpdateInfo = checkForUpdate()
+  abstract fun observeInAppUpdateInstallState(): Flow<InAppUpdateInstallState>
 
-    return suspendCoroutine { continuation ->
-      val listener = OnActivityResultListener { activityResult ->
-        continuation.resume(activityResult)
-      }
+  abstract fun completeFlexibleUpdate()
 
-      setOnActivityResultListener(listener)
-
-      if (inAppUpdateInfo.isUpdateAvailable().not()) {
-        continuation.resumeWithException(InAppUpdateException.UpdateNotAvailableException(message = "Update not available"))
-      }
-
-      when (inAppUpdateType) {
-        InAppUpdateType.IMMEDIATE -> {
-          if (inAppUpdateInfo.isImmediateUpdateAllowed) {
-            val updateOptions = AppUpdateOptions.newBuilder(AppUpdateType.IMMEDIATE).build()
-            appUpdateManager.startUpdateFlowForResult(
-              inAppUpdateInfo.appUpdateInfo, activity, updateOptions, REQUEST_CODE_IMMEDIATE_UPDATE
-            )
-          } else {
-            continuation.resumeWithException(InAppUpdateException.ImmediateUpdateNotAllowedException(message = "Immediate update not allowed"))
-          }
-        }
-
-        InAppUpdateType.FLEXIBLE -> {
-          if (inAppUpdateInfo.isFlexibleUpdateAllowed) {
-            val updateOptions = AppUpdateOptions.newBuilder(AppUpdateType.FLEXIBLE).build()
-            appUpdateManager.startUpdateFlowForResult(
-              inAppUpdateInfo.appUpdateInfo, activity, updateOptions, REQUEST_CODE_FLEXIBLE_UPDATE
-            )
-          } else {
-            continuation.resumeWithException(InAppUpdateException.FlexibleUpdateNotAllowedException(message = "Flexible update not allowed"))
-          }
-        }
-      }
-    }
-  }
-
-  fun observeInAppUpdateInstallState(): Flow<InAppUpdateInstallState> = callbackFlow {
-    var currentInAppUpdateInstallState: InAppUpdateInstallState? = null
-    val installStateUpdatedListener = InstallStateUpdatedListener { installState ->
-      if (currentInAppUpdateInstallState?.installState?.installStatus() != installState.installStatus()) {
-        InAppUpdateInstallState(installState).also {
-          currentInAppUpdateInstallState = it
-          trySend(it)
-        }
-      }
-    }
-
-    appUpdateManager.registerListener(installStateUpdatedListener)
-
-    awaitClose {
-      appUpdateManager.unregisterListener(installStateUpdatedListener)
-    }
-  }
-
-  fun completeFlexibleUpdate() {
-    try {
-      appUpdateManager.completeUpdate()
-    } catch (e: Exception) {
-      throw InAppUpdateException.CompleteFlexibleUpdateException(message = e.message)
-    }
-  }
-
-  private fun setOnActivityResultListener(onActivityResultListener: OnActivityResultListener?) {
+  protected fun setOnActivityResultListener(onActivityResultListener: OnActivityResultListener?) {
     this.onActivityResultListener = onActivityResultListener
   }
 }
