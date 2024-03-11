@@ -87,10 +87,13 @@ internal class InAppUpdateManager(
   }
 
   fun observeInAppUpdateInstallState(): Flow<InAppUpdateInstallState> = callbackFlow {
+    var currentInAppUpdateInstallState: InAppUpdateInstallState? = null
     val installStateUpdatedListener = InstallStateUpdatedListener { installState ->
-      val currentInAppUpdateInstallState = InAppUpdateInstallState(installState)
-      if (currentInAppUpdateInstallState.installState.installStatus() != installState.installStatus()) {
-        trySend(currentInAppUpdateInstallState)
+      if (currentInAppUpdateInstallState?.installState?.installStatus() != installState.installStatus()) {
+        InAppUpdateInstallState(installState).also {
+          currentInAppUpdateInstallState = it
+          trySend(it)
+        }
       }
     }
 
