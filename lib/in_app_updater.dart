@@ -6,11 +6,11 @@ class InAppUpdater {
     return InAppUpdaterPlatform.instance.getPlatformVersion();
   }
 
-  Future<Map<String, dynamic>?> checkForUpdate() {
+  Future<Map<String, dynamic>> checkForUpdate() {
     return InAppUpdaterPlatform.instance.checkForUpdate();
   }
 
-  Future<bool?> checkUpdateAvailable() {
+  Future<bool> checkUpdateAvailable() {
     return InAppUpdaterPlatform.instance.checkUpdateAvailable();
   }
 

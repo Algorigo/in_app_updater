@@ -19,15 +19,15 @@ class MethodChannelInAppUpdater extends InAppUpdaterPlatform {
   }
 
   @override
-  Future<Map<String, dynamic>?> checkForUpdate() async {
+  Future<Map<String, dynamic>> checkForUpdate() async {
     final updateInfo = Map<String, dynamic>.from(await methodChannel.invokeMethod('checkForUpdate') as Map);
     return updateInfo;
   }
 
   @override
-  Future<bool?> checkUpdateAvailable() async {
+  Future<bool> checkUpdateAvailable() async {
     final updateAvailable = await methodChannel.invokeMethod<bool>('checkUpdateAvailable');
-    return updateAvailable;
+    return updateAvailable ?? false;
   }
 
   @override

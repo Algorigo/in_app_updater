@@ -27,11 +27,11 @@ abstract class InAppUpdaterPlatform extends PlatformInterface {
     throw UnimplementedError('platformVersion() has not been implemented.');
   }
 
-  Future<Map<String, dynamic>?> checkForUpdate() {
+  Future<Map<String, dynamic>> checkForUpdate() {
     throw UnimplementedError('checkForUpdate() has not been implemented.');
   }
 
-  Future<bool?> checkUpdateAvailable() {
+  Future<bool> checkUpdateAvailable() {
     throw UnimplementedError('checkUpdateAvailable() has not been implemented.');
   }
 
