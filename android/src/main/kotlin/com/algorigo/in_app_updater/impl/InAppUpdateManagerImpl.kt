@@ -94,6 +94,10 @@ class InAppUpdateManagerImpl(
         InAppUpdateInstallState(installState).also {
           currentInAppUpdateInstallState = it
           trySend(it)
+
+          if (it.isDownloaded()) {
+            close()
+          }
         }
       }
     }
