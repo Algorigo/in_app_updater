@@ -16,5 +16,11 @@ enum class InAppUpdateType(
   companion object {
     const val REQUEST_CODE_IMMEDIATE_UPDATE = 5801
     const val REQUEST_CODE_FLEXIBLE_UPDATE = 5802
+
+    fun fromValue(value: Int?): InAppUpdateType = when (value) {
+      AppUpdateType.FLEXIBLE -> FLEXIBLE
+      AppUpdateType.IMMEDIATE -> IMMEDIATE
+      else -> throw IllegalArgumentException("Invalid value: $value")
+    }
   }
 }
