@@ -15,6 +15,7 @@ import com.google.android.play.core.appupdate.AppUpdateManagerFactory
 import com.google.android.play.core.appupdate.AppUpdateOptions
 import com.google.android.play.core.install.InstallStateUpdatedListener
 import com.google.android.play.core.install.model.AppUpdateType
+import com.google.android.play.core.ktx.requestCompleteUpdate
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -87,6 +88,14 @@ class InAppUpdateManagerImpl(
     }
   }
 
+  override suspend fun requestCompleteUpdate() {
+    try {
+      appUpdateManager.requestCompleteUpdate()
+    } catch (e: Exception) {
+      throw InAppUpdateException.CompleteFlexibleUpdateException(message = e.message)
+    }
+  }
+
   override fun observeInAppUpdateInstallState(): Flow<InAppUpdateInstallState> = callbackFlow {
     var currentInAppUpdateInstallState: InAppUpdateInstallState? = null
     val installStateUpdatedListener = InstallStateUpdatedListener { installState ->
@@ -106,14 +115,6 @@ class InAppUpdateManagerImpl(
 
     awaitClose {
       appUpdateManager.unregisterListener(installStateUpdatedListener)
-    }
-  }
-
-  override fun completeFlexibleUpdate() {
-    try {
-      appUpdateManager.completeUpdate()
-    } catch (e: Exception) {
-      throw InAppUpdateException.CompleteFlexibleUpdateException(message = e.message)
     }
   }
 }

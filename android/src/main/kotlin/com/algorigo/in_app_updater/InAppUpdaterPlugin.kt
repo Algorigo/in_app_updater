@@ -241,13 +241,15 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, EventChannel.Stream
   }
 
   private fun completeFlexibleUpdate(result: Result) {
-    try {
-      inAppUpdateManager?.completeFlexibleUpdate()
-      result.success(Unit)
-    } catch (e: InAppUpdateException) {
-      result.error(e.code.toString(), e.message, e.stackTrace)
-    } catch (e: Exception) {
-      result.error(e.message.toString(), e.cause.toString(), null)
+    mainScope.launch {
+      try {
+        inAppUpdateManager?.requestCompleteUpdate()
+        result.success(Unit)
+      } catch (e: InAppUpdateException) {
+        result.error(e.code.toString(), e.message, e.stackTrace)
+      } catch (e: Exception) {
+        result.error(e.message.toString(), e.cause.toString(), null)
+      }
     }
   }
 

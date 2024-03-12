@@ -28,9 +28,9 @@ abstract class InAppUpdateManager {
 
   abstract suspend fun startUpdate(inAppUpdateType: InAppUpdateType = InAppUpdateType.IMMEDIATE): InAppActivityResult
 
-  abstract fun observeInAppUpdateInstallState(): Flow<InAppUpdateInstallState>
+  abstract suspend fun requestCompleteUpdate()
 
-  abstract fun completeFlexibleUpdate()
+  abstract fun observeInAppUpdateInstallState(): Flow<InAppUpdateInstallState>
 
   protected fun setOnActivityResultListener(onActivityResultListener: OnActivityResultListener?) {
     this.onActivityResultListener = onActivityResultListener
