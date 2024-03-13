@@ -50,4 +50,104 @@ abstract class InAppUpdaterPlatform extends PlatformInterface {
   Stream<dynamic> observeInAppUpdateInstallState() {
     throw UnimplementedError('observeInAppUpdateInstallState() has not been implemented.');
   }
+
+  Future<Map<String, dynamic>> fakeCheckForUpdate() {
+    throw UnimplementedError('fakeCheckForUpdate() has not been implemented.');
+  }
+
+  Future<bool> fakeCheckUpdateAvailable() {
+    throw UnimplementedError('fakeCheckUpdateAvailable() has not been implemented.');
+  }
+
+  Future<void> fakeStartUpdateImmediate() {
+    throw UnimplementedError('fakeStartUpdateImmediate() has not been implemented.');
+  }
+
+  Future<void> fakeStartUpdateFlexible() {
+    throw UnimplementedError('fakeStartUpdateFlexible() has not been implemented.');
+  }
+
+  Future<void> fakeCompleteFlexibleUpdate() {
+    throw UnimplementedError('fakeCompleteFlexibleUpdate() has not been implemented.');
+  }
+
+  Future<void> fakeSetUpdateAvailable(int isAvailable) {
+    throw UnimplementedError('fakeSetUpdateAvailable() has not been implemented.');
+  }
+
+  Future<void> fakeSetUpdateNotAvailable() {
+    throw UnimplementedError('fakeSetUpdateNotAvailable() has not been implemented.');
+  }
+
+  Future<void> fakeUserAcceptsUpdate() {
+    throw UnimplementedError('fakeUserAcceptsUpdate() has not been implemented.');
+  }
+
+  Future<void> fakeUserRejectsUpdate() {
+    throw UnimplementedError('fakeUserRejectsUpdate() has not been implemented.');
+  }
+
+  Future<void> fakeSetUpdatePriority(int priority) {
+    throw UnimplementedError('fakeSetUpdatePriority() has not been implemented.');
+  }
+
+  Future<void> fakeSetClientVersionStalenessDays(int days) {
+    throw UnimplementedError('fakeSetClientVersionStalenessDays() has not been implemented.');
+  }
+
+  Future<int> fakeGetTypeForUpdate() {
+    throw UnimplementedError('fakeGetTypeForUpdate() has not been implemented.');
+  }
+
+  Future<void> fakeSetTotalBytesToDownload(int bytes) {
+    throw UnimplementedError('fakeSetTotalBytesToDownload() has not been implemented.');
+  }
+
+  Future<void> fakeSetBytesDownloaded(int bytes) {
+    throw UnimplementedError('fakeSetBytesDownloaded() has not been implemented.');
+  }
+
+  Future<void> fakeDownloadStarts() {
+    throw UnimplementedError('fakeDownloadStarts() has not been implemented.');
+  }
+
+  Future<void> fakeDownloadCompletes() {
+    throw UnimplementedError('fakeDownloadCompletes() has not been implemented.');
+  }
+
+  Future<void> fakeDownloadFails() {
+    throw UnimplementedError('fakeDownloadFails() has not been implemented.');
+  }
+
+  Future<void> fakeInstallCompletes() {
+    throw UnimplementedError('fakeInstallCompletes() has not been implemented.');
+  }
+
+  Future<void> fakeInstallFails() {
+    throw UnimplementedError('fakeInstallFails() has not been implemented.');
+  }
+
+  Future<void> fakeSetInstallErrorCode(int errorCode) {
+    throw UnimplementedError('fakeSetInstallErrorCode() has not been implemented.');
+  }
+
+  Future<bool> fakeIsConfirmationDialogVisible() {
+    throw UnimplementedError('fakeIsConfirmationDialogVisible() has not been implemented.');
+  }
+
+  Future<bool> fakeIsImmediateFlowVisible() {
+    throw UnimplementedError('fakeIsImmediateFlowVisible() has not been implemented.');
+  }
+
+  Future<bool> fakeIsInstallSplashScreenVisible() {
+    throw UnimplementedError('fakeIsInstallSplashScreenVisible() has not been implemented.');
+  }
+
+  Future<int> fakeTypeForUpdateInProgress() {
+    throw UnimplementedError('fakeTypeForUpdateInProgress() has not been implemented.');
+  }
+
+  Stream<dynamic> fakeObserveInAppUpdateInstallState() {
+    throw UnimplementedError('fakeObserveInAppUpdateInstallState() has not been implemented.');
+  }
 }

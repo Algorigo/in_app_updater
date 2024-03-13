@@ -36,7 +36,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 /** InAppUpdaterPlugin */
-class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHandler, ActivityAware, PluginRegistry.ActivityResultListener,
+class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, PluginRegistry.ActivityResultListener,
   Application.ActivityLifecycleCallbacks {
   /// The MethodChannel that will the communication between Flutter and native Android
   ///
@@ -44,6 +44,7 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, EventChannel.Stream
   /// when the Flutter Engine is detached from the Activity
   private lateinit var methodChannel: MethodChannel
   private lateinit var eventChannel: EventChannel
+  private lateinit var fakeEventChannel: EventChannel
 
   private var activity: Activity? = null
 
@@ -52,6 +53,7 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, EventChannel.Stream
 
   private val mainScope = CoroutineScope(Dispatchers.Main)
   private val eventScope = CoroutineScope(Dispatchers.Main)
+  private val fakeEventScope = CoroutineScope(Dispatchers.Main)
 
   private var lastResult: Result? = null
 
@@ -60,7 +62,36 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, EventChannel.Stream
     methodChannel.setMethodCallHandler(this)
 
     eventChannel = EventChannel(flutterPluginBinding.binaryMessenger, "in_app_updater_event")
-    eventChannel.setStreamHandler(this)
+    eventChannel.setStreamHandler(object : EventChannel.StreamHandler {
+      override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
+        eventScope.launch {
+          inAppUpdateManager?.observeInAppUpdateInstallState()
+            ?.collectLatest {
+              events?.success(it)
+            }
+        }
+      }
+
+      override fun onCancel(arguments: Any?) {
+        eventScope.cancel()
+      }
+    })
+
+    fakeEventChannel = EventChannel(flutterPluginBinding.binaryMessenger, "in_app_updater_fake_event")
+    fakeEventChannel.setStreamHandler(object : EventChannel.StreamHandler {
+      override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
+        fakeEventScope.launch {
+          fakeInAppUpdateManager?.observeInAppUpdateInstallState()
+            ?.collectLatest {
+              events?.success(it)
+            }
+        }
+      }
+
+      override fun onCancel(arguments: Any?) {
+        fakeEventScope.cancel()
+      }
+    })
   }
 
   override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
@@ -132,19 +163,6 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, EventChannel.Stream
   override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
     inAppUpdateManager?.onActivityResultListener?.onActivityResult(InAppActivityResult(requestCode, resultCode, data))
     return true
-  }
-
-  override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
-    eventScope.launch {
-      inAppUpdateManager?.observeInAppUpdateInstallState()
-        ?.collectLatest {
-          events?.success(it)
-        }
-    }
-  }
-
-  override fun onCancel(arguments: Any?) {
-    eventScope.cancel()
   }
 
   private fun onActivityResult(result: Result?, inAppActivityResult: InAppActivityResult) {
