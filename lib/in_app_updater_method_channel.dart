@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import 'data/in_app_update_info.dart';
 import 'in_app_updater_platform_interface.dart';
 
 /// An implementation of [InAppUpdaterPlatform] that uses method channels.
@@ -16,14 +17,9 @@ class MethodChannelInAppUpdater extends InAppUpdaterPlatform {
   final fakeEventChannel = const EventChannel('in_app_updater_fake_event');
 
   @override
-  Future<String?> getPlatformVersion() async {
-    final version = await methodChannel.invokeMethod<String>('getPlatformVersion');
-    return version;
-  }
-
-  @override
-  Future<Map<String, dynamic>> checkForUpdate() async {
-    final updateInfo = Map<String, dynamic>.from(await methodChannel.invokeMethod('checkForUpdate') as Map);
+  Future<InAppUpdateInfo> checkForUpdate() async {
+    final map = Map<String, dynamic>.from(await methodChannel.invokeMethod('checkForUpdate') as Map);
+    final updateInfo = InAppUpdateInfo.fromJson(map);
     return updateInfo;
   }
 
@@ -54,8 +50,9 @@ class MethodChannelInAppUpdater extends InAppUpdaterPlatform {
   }
 
   @override
-  Future<Map<String, dynamic>> fakeCheckForUpdate() async {
-    final updateInfo = Map<String, dynamic>.from(await methodChannel.invokeMethod('fakeCheckForUpdate') as Map);
+  Future<InAppUpdateInfo> fakeCheckForUpdate() async {
+    final map = Map<String, dynamic>.from(await methodChannel.invokeMethod('fakeCheckForUpdate') as Map);
+    final updateInfo = InAppUpdateInfo.fromJson(map);
     return updateInfo;
   }
 

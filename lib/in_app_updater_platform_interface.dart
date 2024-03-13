@@ -1,3 +1,4 @@
+import 'package:in_app_updater/data/in_app_update_info.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 import 'in_app_updater_method_channel.dart';
@@ -27,7 +28,7 @@ abstract class InAppUpdaterPlatform extends PlatformInterface {
     throw UnimplementedError('platformVersion() has not been implemented.');
   }
 
-  Future<Map<String, dynamic>> checkForUpdate() {
+  Future<InAppUpdateInfo> checkForUpdate() {
     throw UnimplementedError('checkForUpdate() has not been implemented.');
   }
 
@@ -51,7 +52,7 @@ abstract class InAppUpdaterPlatform extends PlatformInterface {
     throw UnimplementedError('observeInAppUpdateInstallState() has not been implemented.');
   }
 
-  Future<Map<String, dynamic>> fakeCheckForUpdate() {
+  Future<InAppUpdateInfo> fakeCheckForUpdate() {
     throw UnimplementedError('fakeCheckForUpdate() has not been implemented.');
   }
 

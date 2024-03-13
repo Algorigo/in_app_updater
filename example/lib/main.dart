@@ -1,7 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 
-import 'package:flutter/services.dart';
+import 'package:in_app_updater/data/in_app_update_info.dart';
 import 'package:in_app_updater/in_app_updater.dart';
 
 void main() {
@@ -16,34 +17,29 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  String _platformVersion = 'Unknown';
-  Map<String, dynamic> _updateInfo = {};
+  InAppUpdateInfo? _appUpdateInfo;
   final _inAppUpdaterPlugin = InAppUpdater();
 
   @override
   void initState() {
     super.initState();
-    initPlatformState();
+    initAppUpdateInfo();
   }
 
   // Platform messages are asynchronous, so we initialize in an async method.
-  Future<void> initPlatformState() async {
-    String platformVersion;
-    // Platform messages may fail, so we use a try/catch PlatformException.
-    // We also handle the message potentially returning null.
-    try {
-      platformVersion =
-          await _inAppUpdaterPlugin.getPlatformVersion() ?? 'Unknown platform version';
-    } on PlatformException {
-      platformVersion = 'Failed to get platform version.';
-    }
+  Future<void> initAppUpdateInfo() async {
+    InAppUpdateInfo? appUpdateInfo;
 
     try {
-      _updateInfo = await _inAppUpdaterPlugin.checkForUpdate() ?? {};
-      print('update info: $_updateInfo');
+      appUpdateInfo = await _inAppUpdaterPlugin.checkForUpdate();
+      if (kDebugMode) {
+        print('update info: $appUpdateInfo');
+      }
     } catch(e) {
-      print("Failed to get update info: $e");
-      _updateInfo = {};
+      if (kDebugMode) {
+        print("Failed to get update info: $e");
+      }
+      appUpdateInfo = null;
     }
 
 
@@ -53,7 +49,7 @@ class _MyAppState extends State<MyApp> {
     if (!mounted) return;
 
     setState(() {
-      _platformVersion = platformVersion;
+      _appUpdateInfo = appUpdateInfo;
     });
   }
 
@@ -67,8 +63,7 @@ class _MyAppState extends State<MyApp> {
         body: Center(
           child: Column(
             children: [
-              Text('Running on: $_platformVersion\n'),
-              Text('update info: $_updateInfo\n'),
+              Text('update info: ${_appUpdateInfo?.toJson()}\n'),
             ],
           ),
         ),

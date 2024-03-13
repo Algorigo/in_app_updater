@@ -1,4 +1,6 @@
 
+import 'package:in_app_updater/data/in_app_update_info.dart';
+
 import 'in_app_updater_platform_interface.dart';
 
 class InAppUpdater {
@@ -6,7 +8,7 @@ class InAppUpdater {
     return InAppUpdaterPlatform.instance.getPlatformVersion();
   }
 
-  Future<Map<String, dynamic>> checkForUpdate() {
+  Future<InAppUpdateInfo> checkForUpdate() {
     return InAppUpdaterPlatform.instance.checkForUpdate();
   }
 
