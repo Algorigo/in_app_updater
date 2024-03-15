@@ -1,3 +1,7 @@
+import 'package:in_app_updater/data/update_availability.dart';
+
+import 'install_status.dart';
+
 class InAppUpdateInfo {
   final UpdateAvailability updateAvailability;
   final int availableVersionCode;
@@ -59,22 +63,4 @@ class InAppUpdateInfo {
       'bytesDownloaded': bytesDownloaded,
     };
   }
-}
-
-enum UpdateAvailability {
-  unknown,
-  updateNotAvailable,
-  updateAvailable,
-  developerTriggeredUpdateInProgress,
-}
-
-enum InstallStatus {
-  unknown,
-  pending,
-  installing,
-  installed,
-  failed,
-  downloading,
-  downloaded,
-  canceled,
 }

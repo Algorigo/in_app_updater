@@ -1,4 +1,5 @@
 import 'package:in_app_updater/data/in_app_update_info.dart';
+import 'package:in_app_updater/data/in_app_update_install_state.dart';
 
 import 'in_app_updater_platform_interface.dart';
 
@@ -23,7 +24,7 @@ class FakeInAppUpdater {
     return InAppUpdaterPlatform.instance.fakeCompleteFlexibleUpdate();
   }
 
-  Stream<dynamic> observeInAppUpdateInstallState() {
+  Stream<InAppUpdateInstallState> observeInAppUpdateInstallState() {
     return InAppUpdaterPlatform.instance.observeInAppUpdateInstallState();
   }
 

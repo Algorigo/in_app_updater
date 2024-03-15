@@ -1,5 +1,8 @@
 import 'package:in_app_updater/data/in_app_update_info.dart';
 
+import '../data/install_status.dart';
+import '../data/update_availability.dart';
+
 extension UpdateAvailabilityExtension on UpdateAvailability {
   int toValue() {
     switch (this) {

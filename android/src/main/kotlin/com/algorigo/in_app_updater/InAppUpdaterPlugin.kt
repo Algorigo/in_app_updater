@@ -18,7 +18,11 @@ import com.google.android.play.core.appupdate.testing.FakeAppUpdateManager
 import com.google.android.play.core.install.model.ActivityResult
 import com.google.android.play.core.install.model.AppUpdateType
 import com.google.android.play.core.install.model.UpdateAvailability
+import com.google.android.play.core.ktx.bytesDownloaded
+import com.google.android.play.core.ktx.hasTerminalStatus
 import com.google.android.play.core.ktx.installStatus
+import com.google.android.play.core.ktx.packageName
+import com.google.android.play.core.ktx.totalBytesToDownload
 import com.google.android.play.core.ktx.updatePriority
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
@@ -67,7 +71,7 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Plug
         eventScope.launch {
           inAppUpdateManager?.observeInAppUpdateInstallState()
             ?.collectLatest {
-              events?.success(it)
+              events?.success(it.toMap())
             }
         }
       }
@@ -83,7 +87,7 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Plug
         fakeEventScope.launch {
           fakeInAppUpdateManager?.observeInAppUpdateInstallState()
             ?.collectLatest {
-              events?.success(it)
+              events?.success(it.toMap())
             }
         }
       }
@@ -220,30 +224,7 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Plug
     mainScope.launch(Dispatchers.Main) {
       try {
         val appUpdateInfo = inAppUpdateManager?.checkForUpdate()
-
-        val infoMap = mapOf(
-          "updateAvailability" to appUpdateInfo?.appUpdateInfo?.updateAvailability(),
-          "availableVersionCode" to appUpdateInfo?.appUpdateInfo?.availableVersionCode(),
-          "updatePriority" to appUpdateInfo?.appUpdateInfo?.updatePriority,
-          "packageName" to appUpdateInfo?.appUpdateInfo?.packageName(),
-          "clientVersionStalenessDays" to appUpdateInfo?.appUpdateInfo?.clientVersionStalenessDays(),
-          "installStatus" to appUpdateInfo?.appUpdateInfo?.installStatus,
-          "isFlexibleUpdateAllowed" to appUpdateInfo?.isFlexibleUpdateAllowed,
-          "isFlexibleUpdateFailedPreconditions" to appUpdateInfo
-            ?.appUpdateInfo
-            ?.getFailedUpdatePreconditions(AppUpdateOptions.defaultOptions(AppUpdateType.FLEXIBLE))
-            ?.map { it.toInt() }
-            ?.toList(),
-          "isImmediateUpdateAllowed" to appUpdateInfo?.isImmediateUpdateAllowed,
-          "isImmediateUpdateFailedPreconditions" to appUpdateInfo
-            ?.appUpdateInfo
-            ?.getFailedUpdatePreconditions(AppUpdateOptions.defaultOptions(AppUpdateType.IMMEDIATE))
-            ?.map { it.toInt() }
-            ?.toList(),
-          "bytesDownloaded" to appUpdateInfo?.appUpdateInfo?.bytesDownloaded(),
-          "totalBytesToDownload" to appUpdateInfo?.appUpdateInfo?.totalBytesToDownload(),
-        )
-        result.success(infoMap)
+        result.success(appUpdateInfo?.toMap())
       } catch (e: InAppUpdateException) {
         result.error(e.code.toString(), e.message, null)
       } catch (e: Exception) {

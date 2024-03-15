@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:in_app_updater/data/in_app_update_info.dart';
+import 'package:in_app_updater/data/in_app_update_install_state.dart';
 import 'package:in_app_updater/in_app_updater.dart';
 import 'package:in_app_updater/in_app_updater_platform_interface.dart';
 import 'package:in_app_updater/in_app_updater_method_channel.dart';
@@ -103,12 +104,6 @@ class MockInAppUpdaterPlatform
   }
 
   @override
-  Stream fakeObserveInAppUpdateInstallState() {
-    // TODO: implement fakeObserveInAppUpdateInstallState
-    throw UnimplementedError();
-  }
-
-  @override
   Future<void> fakeSetBytesDownloaded(int bytes) {
     // TODO: implement fakeSetBytesDownloaded
     throw UnimplementedError();
@@ -181,12 +176,6 @@ class MockInAppUpdaterPlatform
   }
 
   @override
-  Stream observeInAppUpdateInstallState() {
-    // TODO: implement observeInAppUpdateInstallState
-    throw UnimplementedError();
-  }
-
-  @override
   Future<void> startUpdateFlexible() {
     // TODO: implement startUpdateFlexible
     throw UnimplementedError();
@@ -195,6 +184,18 @@ class MockInAppUpdaterPlatform
   @override
   Future<void> startUpdateImmediate() {
     // TODO: implement startUpdateImmediate
+    throw UnimplementedError();
+  }
+
+  @override
+  Stream<InAppUpdateInstallState> fakeObserveInAppUpdateInstallState() {
+    // TODO: implement fakeObserveInAppUpdateInstallState
+    throw UnimplementedError();
+  }
+
+  @override
+  Stream<InAppUpdateInstallState> observeInAppUpdateInstallState() {
+    // TODO: implement observeInAppUpdateInstallState
     throw UnimplementedError();
   }
 }

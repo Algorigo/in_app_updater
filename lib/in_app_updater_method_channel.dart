@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:in_app_updater/data/in_app_update_install_state.dart';
 
 import 'data/in_app_update_info.dart';
 import 'in_app_updater_platform_interface.dart';
@@ -45,8 +48,11 @@ class MethodChannelInAppUpdater extends InAppUpdaterPlatform {
   }
 
   @override
-  Stream<dynamic> observeInAppUpdateInstallState() {
-    return eventChannel.receiveBroadcastStream();
+  Stream<InAppUpdateInstallState> observeInAppUpdateInstallState() {
+    return eventChannel
+        .receiveBroadcastStream()
+        .map((event) => jsonDecode(event))
+        .map((map) => InAppUpdateInstallState.fromJson(map));
   }
 
   @override
@@ -173,7 +179,10 @@ class MethodChannelInAppUpdater extends InAppUpdaterPlatform {
   }
 
   @override
-  Stream<dynamic> fakeObserveInAppUpdateInstallState() {
-    return fakeEventChannel.receiveBroadcastStream();
+  Stream<InAppUpdateInstallState> fakeObserveInAppUpdateInstallState() {
+    return fakeEventChannel
+        .receiveBroadcastStream()
+        .map((event) => jsonDecode(event))
+        .map((map) => InAppUpdateInstallState.fromJson(map));
   }
 }

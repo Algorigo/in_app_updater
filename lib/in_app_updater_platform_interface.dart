@@ -1,4 +1,5 @@
 import 'package:in_app_updater/data/in_app_update_info.dart';
+import 'package:in_app_updater/data/in_app_update_install_state.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 import 'in_app_updater_method_channel.dart';
@@ -48,7 +49,7 @@ abstract class InAppUpdaterPlatform extends PlatformInterface {
     throw UnimplementedError('completeFlexibleUpdate() has not been implemented.');
   }
 
-  Stream<dynamic> observeInAppUpdateInstallState() {
+  Stream<InAppUpdateInstallState> observeInAppUpdateInstallState() {
     throw UnimplementedError('observeInAppUpdateInstallState() has not been implemented.');
   }
 
@@ -148,7 +149,7 @@ abstract class InAppUpdaterPlatform extends PlatformInterface {
     throw UnimplementedError('fakeTypeForUpdateInProgress() has not been implemented.');
   }
 
-  Stream<dynamic> fakeObserveInAppUpdateInstallState() {
+  Stream<InAppUpdateInstallState> fakeObserveInAppUpdateInstallState() {
     throw UnimplementedError('fakeObserveInAppUpdateInstallState() has not been implemented.');
   }
 }
