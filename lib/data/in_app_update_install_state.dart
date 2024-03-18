@@ -1,13 +1,14 @@
-import 'in_app_update_info.dart';
+import 'package:in_app_updater/data/install_status.dart';
+import 'package:in_app_updater/extensions/in_app_update_extensions.dart';
 
 class InAppUpdateInstallState {
-  final String packageName;
-  final int installStatus;
-  final bool isDownloaded;
-  final int bytesDownloaded;
-  final int totalBytesToDownload;
-  final bool hasTerminalStatus;
-  final int installErrorCode;
+  final String? packageName;
+  final InstallStatus? installStatus;
+  final bool? isDownloaded;
+  final int? bytesDownloaded;
+  final int? totalBytesToDownload;
+  final bool? hasTerminalStatus;
+  final int? installErrorCode;
 
   InAppUpdateInstallState({
     required this.packageName,
@@ -22,7 +23,7 @@ class InAppUpdateInstallState {
   factory InAppUpdateInstallState.fromJson(Map<String, dynamic> json) {
     return InAppUpdateInstallState(
       packageName: json['packageName'],
-      installStatus: json['installStatus'],
+      installStatus: (json['installStatus'] as int?)?.toInstallStatus(),
       isDownloaded: json['isDownloaded'],
       bytesDownloaded: json['bytesDownloaded'],
       totalBytesToDownload: json['totalBytesToDownload'],

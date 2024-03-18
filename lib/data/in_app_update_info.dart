@@ -1,20 +1,21 @@
 import 'package:in_app_updater/data/update_availability.dart';
+import 'package:in_app_updater/extensions/in_app_update_extensions.dart';
 
 import 'install_status.dart';
 
 class InAppUpdateInfo {
-  final UpdateAvailability updateAvailability;
-  final int availableVersionCode;
-  final int updatePriority;
-  final String packageName;
-  final int clientVersionStalenessDays;
-  final InstallStatus installStatus;
-  final bool isFlexibleUpdateAllowed;
-  final List<int> flexibleUpdateFailedPreconditions;
-  final bool isImmediateUpdateAllowed;
-  final List<int> immediateUpdateFailedPreconditions;
-  final int bytesDownloaded;
-  final int totalBytesToDownload;
+  final UpdateAvailability? updateAvailability;
+  final int? availableVersionCode;
+  final int? updatePriority;
+  final String? packageName;
+  final int? clientVersionStalenessDays;
+  final InstallStatus? installStatus;
+  final bool? isFlexibleUpdateAllowed;
+  final List<int>? flexibleUpdateFailedPreconditions;
+  final bool? isImmediateUpdateAllowed;
+  final List<int>? immediateUpdateFailedPreconditions;
+  final int? bytesDownloaded;
+  final int? totalBytesToDownload;
 
   InAppUpdateInfo({
     required this.updateAvailability,
@@ -33,16 +34,16 @@ class InAppUpdateInfo {
 
   factory InAppUpdateInfo.fromJson(Map<String, dynamic> json) {
     return InAppUpdateInfo(
-      updateAvailability: json['updateAvailability'],
+      updateAvailability: (json['updateAvailability'] as int?)?.toUpdateAvailability(),
       availableVersionCode: json['availableVersionCode'],
       updatePriority: json['updatePriority'],
       packageName: json['packageName'],
       clientVersionStalenessDays: json['clientVersionStalenessDays'],
-      installStatus: json['installStatus'],
+      installStatus: (json['installStatus'] as int?)?.toInstallStatus(),
       isFlexibleUpdateAllowed: json['isFlexibleUpdateAllowed'],
-      flexibleUpdateFailedPreconditions: List<int>.from(json['flexibleUpdateFailedPreconditions']),
+      flexibleUpdateFailedPreconditions: List<int>.from(json['isFlexibleUpdateFailedPreconditions']),
       isImmediateUpdateAllowed: json['isImmediateUpdateAllowed'],
-      immediateUpdateFailedPreconditions: List<int>.from(json['immediateUpdateFailedPreconditions']),
+      immediateUpdateFailedPreconditions: List<int>.from(json['isImmediateUpdateFailedPreconditions']),
       bytesDownloaded: json['bytesDownloaded'],
       totalBytesToDownload: json['totalBytesToDownload'],
     );
