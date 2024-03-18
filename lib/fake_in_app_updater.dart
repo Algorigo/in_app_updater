@@ -25,7 +25,7 @@ class FakeInAppUpdater {
   }
 
   Stream<InAppUpdateInstallState> observeInAppUpdateInstallState() {
-    return InAppUpdaterPlatform.instance.observeInAppUpdateInstallState();
+    return InAppUpdaterPlatform.instance.fakeObserveInAppUpdateInstallState();
   }
 
   Future<void> setUpdateAvailable(int isAvailable) {
