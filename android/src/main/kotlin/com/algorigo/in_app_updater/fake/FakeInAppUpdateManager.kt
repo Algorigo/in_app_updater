@@ -113,10 +113,6 @@ class FakeInAppUpdateManager(
         InAppUpdateInstallState(installState).also {
           currentInAppUpdateInstallState = it
           trySend(it)
-
-          if (it.isDownloaded()) {
-            close()
-          }
         }
       }
     }
@@ -211,6 +207,15 @@ class FakeInAppUpdateManager(
   suspend fun downloadStarts() = suspendCoroutine {
     try {
       fakeAppUpdateManager.downloadStarts()
+      it.resume(Unit)
+    } catch (e: Exception) {
+      it.resumeWithException(InAppUpdateException.UnExpectedException(message = e.message))
+    }
+  }
+
+  suspend fun userCancelsDownload() = suspendCoroutine {
+    try {
+      fakeAppUpdateManager.userCancelsDownload()
       it.resume(Unit)
     } catch (e: Exception) {
       it.resumeWithException(InAppUpdateException.UnExpectedException(message = e.message))

@@ -1,3 +1,4 @@
+import 'package:in_app_updater/data/app_update_type.dart';
 import 'package:in_app_updater/data/in_app_update_info.dart';
 import 'package:in_app_updater/data/in_app_update_install_state.dart';
 
@@ -28,8 +29,8 @@ class FakeInAppUpdater {
     return InAppUpdaterPlatform.instance.fakeObserveInAppUpdateInstallState();
   }
 
-  Future<void> setUpdateAvailable(int isAvailable) {
-    return InAppUpdaterPlatform.instance.fakeSetUpdateAvailable(isAvailable);
+  Future<void> setUpdateAvailable(int availableVersionCode, AppUpdateType appUpdateType) {
+    return InAppUpdaterPlatform.instance.fakeSetUpdateAvailable(availableVersionCode, appUpdateType);
   }
 
   Future<void> setUpdateNotAvailable() {
@@ -66,6 +67,10 @@ class FakeInAppUpdater {
 
   Future<void> setDownloadCompletes() {
     return InAppUpdaterPlatform.instance.fakeDownloadCompletes();
+  }
+
+  Future<void> setFakeUserCancelsDownload() {
+    return InAppUpdaterPlatform.instance.fakeUserCancelsDownload();
   }
 
   Future<void> setDownloadFails() {

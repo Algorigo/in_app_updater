@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:in_app_updater/data/app_update_type.dart';
 import 'package:in_app_updater/data/in_app_update_info.dart';
 import 'package:in_app_updater/data/in_app_update_install_state.dart';
 import 'package:in_app_updater/in_app_updater.dart';
@@ -52,6 +53,12 @@ class MockInAppUpdaterPlatform
   @override
   Future<void> fakeDownloadCompletes() {
     // TODO: implement fakeDownloadCompletes
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> fakeUserCancelsDownload() {
+    // TODO: implement fakeUserCancelsDownload
     throw UnimplementedError();
   }
 
@@ -128,7 +135,7 @@ class MockInAppUpdaterPlatform
   }
 
   @override
-  Future<void> fakeSetUpdateAvailable(int isAvailable) {
+  Future<void> fakeSetUpdateAvailable(int availableVersionCode, AppUpdateType appUpdateType) {
     // TODO: implement fakeSetUpdateAvailable
     throw UnimplementedError();
   }

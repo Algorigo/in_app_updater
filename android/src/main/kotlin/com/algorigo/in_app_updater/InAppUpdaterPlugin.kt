@@ -149,6 +149,7 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Plug
       "fakeSetTotalBytesToDownload" -> fakeSetTotalBytesToDownload(call, result)
       "fakeSetBytesDownloaded" -> fakeSetBytesDownloaded(call, result)
       "fakeDownloadStarts" -> fakeDownloadStarts(result)
+      "fakeUserCancelsDownload" -> fakeUserCancelsDownload(result)
       "fakeDownloadCompletes" -> fakeDownloadCompletes(result)
       "fakeDownloadFails" -> fakeDownloadFails(result)
       "fakeInstallCompletes" -> fakeInstallCompletes(result)
@@ -417,8 +418,16 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Plug
         result.success(null)
       } catch (e: InAppUpdateException) {
         result.error(e.code.toString(), e.message, e.stackTrace)
+
+  private fun fakeUserCancelsDownload(result: Result) {
+    mainScope.launch {
+      try {
+        fakeInAppUpdateManager?.userCancelsDownload()
+        result.success(null)
+      } catch (e: InAppUpdateException) {
+        result.error(e.code.toString(), e.toString(), e.stackTrace)
       } catch (e: Exception) {
-        result.error(e.message.toString(), e.cause.toString(), null)
+        result.error(e.message.toString(), e.toString(), null)
       }
     }
   }

@@ -3,7 +3,9 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:in_app_updater/data/in_app_update_install_state.dart';
+import 'package:in_app_updater/extensions/in_app_update_extensions.dart';
 
+import 'data/app_update_type.dart';
 import 'data/in_app_update_info.dart';
 import 'in_app_updater_platform_interface.dart';
 
@@ -84,8 +86,12 @@ class MethodChannelInAppUpdater extends InAppUpdaterPlatform {
   }
 
   @override
-  Future<void> fakeSetUpdateAvailable(int isAvailable) async {
-    return await methodChannel.invokeMethod('fakeSetUpdateAvailable', isAvailable);
+  Future<void> fakeSetUpdateAvailable(int availableVersionCode, AppUpdateType appUpdateType) async {
+    final map = {
+      'availableVersionCode': availableVersionCode,
+      'appUpdateType': appUpdateType.index,
+    };
+    return await methodChannel.invokeMethod('fakeSetUpdateAvailable', map);
   }
 
   @override
@@ -131,6 +137,11 @@ class MethodChannelInAppUpdater extends InAppUpdaterPlatform {
   @override
   Future<void> fakeDownloadStarts() async {
     return await methodChannel.invokeMethod('fakeDownloadStarts');
+  }
+
+  @override
+  Future<void> fakeUserCancelsDownload() async {
+    return await methodChannel.invokeMethod('fakeUserCancelsDownload');
   }
 
   @override
@@ -182,7 +193,6 @@ class MethodChannelInAppUpdater extends InAppUpdaterPlatform {
   Stream<InAppUpdateInstallState> fakeObserveInAppUpdateInstallState() {
     return fakeEventChannel
         .receiveBroadcastStream()
-        .map((event) => jsonDecode(event))
-        .map((map) => InAppUpdateInstallState.fromJson(map));
+        .map((map) => InAppUpdateInstallState.fromJson(Map<String, dynamic>.from(map)));
   }
 }
