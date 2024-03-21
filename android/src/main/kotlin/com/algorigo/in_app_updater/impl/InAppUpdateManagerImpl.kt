@@ -60,6 +60,7 @@ class InAppUpdateManagerImpl(
 
       if (inAppUpdateInfo.isUpdateAvailable().not()) {
         continuation.resumeWithException(InAppUpdateException.UpdateNotAvailableException(message = "Update not available"))
+        return@suspendCoroutine
       }
 
       when (inAppUpdateType) {
