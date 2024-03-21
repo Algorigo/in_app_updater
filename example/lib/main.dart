@@ -1,9 +1,13 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:in_app_updater/data/app_update_type.dart';
 import 'package:in_app_updater/data/in_app_update_info.dart';
-import 'package:in_app_updater/in_app_updater.dart';
+import 'package:in_app_updater/data/in_app_update_install_state.dart';
+import 'package:in_app_updater/data/install_status.dart';
+import 'package:in_app_updater/extensions/in_app_update_extensions.dart';
+import 'package:in_app_updater/fake_in_app_updater.dart';
 
 void main() {
   runApp(const MyApp());
@@ -17,40 +21,137 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  final _fakeInAppUpdater = FakeInAppUpdater();
+
+  StreamSubscription<InAppUpdateInstallState>? installStateStreamSubscription;
+
   InAppUpdateInfo? _appUpdateInfo;
-  final _inAppUpdaterPlugin = InAppUpdater();
+  int _availableVersionCode = 1;
+  bool? _updateAvailable;
+  InAppUpdateInstallState? _installState;
 
   @override
   void initState() {
     super.initState();
-    initAppUpdateInfo();
+    checkAppUpdateInfo();
+    observeInAppUpdateInstallState();
   }
 
-  // Platform messages are asynchronous, so we initialize in an async method.
-  Future<void> initAppUpdateInfo() async {
+  @override
+  void dispose() {
+    installStateStreamSubscription?.cancel();
+    super.dispose();
+  }
+
+  String installStatusToString(InAppUpdateInstallState? inAppUpdateInstallState) {
+    switch (inAppUpdateInstallState?.installStatus) {
+      case null:
+        return 'Install not started';
+      case InstallStatus.unknown:
+        return 'Install not started';
+      case InstallStatus.pending:
+        return 'Install pending';
+      case InstallStatus.installing:
+        return 'Installing';
+      case InstallStatus.installed:
+        return 'Installed';
+      case InstallStatus.failed:
+        return 'Install failed';
+      case InstallStatus.downloading:
+        return 'Downloading';
+      case InstallStatus.downloaded:
+        return 'Downloaded';
+      case InstallStatus.canceled:
+        return 'Install canceled';
+    }
+  }
+
+  void observeInAppUpdateInstallState() {
+    installStateStreamSubscription ??= _fakeInAppUpdater.observeInAppUpdateInstallState().listen((event) {
+      setState(() {
+        _installState = event;
+      });
+    });
+  }
+
+  Future<void> checkAppUpdateInfo() async {
     InAppUpdateInfo? appUpdateInfo;
 
     try {
-      appUpdateInfo = await _inAppUpdaterPlugin.checkForUpdate();
+      appUpdateInfo = await _fakeInAppUpdater.checkForUpdate();
       if (kDebugMode) {
-        print('update info: $appUpdateInfo');
+        print('update info: ${appUpdateInfo.toJson()}');
       }
-    } catch(e) {
+    } catch (e) {
       if (kDebugMode) {
         print("Failed to get update info: $e");
       }
       appUpdateInfo = null;
     }
 
-
-    // If the widget was removed from the tree while the asynchronous platform
-    // message was in flight, we want to discard the reply rather than calling
-    // setState to update our non-existent appearance.
     if (!mounted) return;
 
     setState(() {
       _appUpdateInfo = appUpdateInfo;
+      _updateAvailable = appUpdateInfo?.updateAvailability?.checkUpdateAvailable() ?? false;
     });
+  }
+
+  Future<void> checkUpdateAvailable() async {
+    bool updateAvailable;
+    try {
+      updateAvailable = await _fakeInAppUpdater.checkUpdateAvailable();
+      if (kDebugMode) {
+        print('update available: $updateAvailable');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print("Failed to check update available: $e");
+      }
+      updateAvailable = false;
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      _updateAvailable = updateAvailable;
+    });
+  }
+
+  Future<void> setFlexibleUpdateAvailable() async {
+    try {
+      await _fakeInAppUpdater.setUpdateAvailable(_availableVersionCode++, AppUpdateType.flexible);
+      await checkAppUpdateInfo();
+    } catch (e) {
+      if (kDebugMode) {
+        print("Failed to set update available: $e");
+      }
+    }
+  }
+
+  Future<void> startFakeFlexibleUpdateFlow() async {
+    try {
+      await _fakeInAppUpdater.startUpdateFlexible();
+      await _fakeInAppUpdater.setTotalBytesToDownload(100);
+      await _fakeInAppUpdater.userAcceptsUpdate();
+      await Future.delayed(const Duration(seconds: 1)); // 1 second delay
+      await _fakeInAppUpdater.setDownloadStarts();
+      await Future.delayed(const Duration(seconds: 1)); // 1 second delay
+      await _fakeInAppUpdater.setBytesDownloaded(50);
+      await Future.delayed(const Duration(seconds: 1)); // 1 second delay
+      await _fakeInAppUpdater.setBytesDownloaded(100);
+      await Future.delayed(const Duration(seconds: 1)); // 1 second delay
+      await _fakeInAppUpdater.setDownloadCompletes();
+      await Future.delayed(const Duration(seconds: 1)); // 1 second delay
+      await _fakeInAppUpdater.completeFlexibleUpdate();
+      await Future.delayed(const Duration(seconds: 1)); // 1 second delay
+      await _fakeInAppUpdater.setInstallCompletes();
+      await checkAppUpdateInfo();
+    } catch (e) {
+      if (kDebugMode) {
+        print("Failed to set download starts: $e");
+      }
+    }
   }
 
   @override
@@ -60,11 +161,20 @@ class _MyAppState extends State<MyApp> {
         appBar: AppBar(
           title: const Text('Plugin example app'),
         ),
-        body: Center(
-          child: Column(
-            children: [
-              Text('update info: ${_appUpdateInfo?.toJson()}\n'),
-            ],
+        body: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TextButton(onPressed: checkAppUpdateInfo, child: const Text('Check for update')),
+                Text('update info: ${_appUpdateInfo?.toJson()}\n', textAlign: TextAlign.center),
+                TextButton(onPressed: setFlexibleUpdateAvailable, child: const Text('Set update available')),
+                TextButton(onPressed: startFakeFlexibleUpdateFlow, child: const Text('Start fake flexible update flow')),
+                Text('update available: $_updateAvailable\n', style: const TextStyle(color: Colors.red), textAlign: TextAlign.center),
+                Text('Install state: ${installStatusToString(_installState)}', style: const TextStyle(color: Colors.red), textAlign: TextAlign.center),
+              ],
+            ),
           ),
         ),
       ),
