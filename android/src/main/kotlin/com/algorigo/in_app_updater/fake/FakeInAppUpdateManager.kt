@@ -1,13 +1,13 @@
 package com.algorigo.in_app_updater.fake
 
 import android.app.Activity
+import android.app.Activity.RESULT_OK
 import androidx.annotation.IntRange
 import com.algorigo.in_app_updater.InAppActivityResult
 import com.algorigo.in_app_updater.InAppUpdateInfo
 import com.algorigo.in_app_updater.InAppUpdateInstallState
 import com.algorigo.in_app_updater.InAppUpdateManager
 import com.algorigo.in_app_updater.InAppUpdateType
-import com.algorigo.in_app_updater.callbacks.OnActivityResultListener
 import com.algorigo.in_app_updater.exceptions.InAppUpdateException
 import com.google.android.play.core.appupdate.AppUpdateOptions
 import com.google.android.play.core.appupdate.testing.FakeAppUpdateManager
@@ -62,14 +62,10 @@ class FakeInAppUpdateManager(
     val inAppUpdateInfo = checkForUpdate()
 
     return suspendCoroutine { continuation ->
-      val listener = OnActivityResultListener { activityResult ->
-        continuation.resume(activityResult)
-      }
-
-      setOnActivityResultListener(listener)
 
       if (inAppUpdateInfo.isUpdateAvailable().not()) {
         continuation.resumeWithException(InAppUpdateException.UpdateNotAvailableException(message = "Update not available"))
+        return@suspendCoroutine
       }
 
       when (inAppUpdateType) {
@@ -79,6 +75,8 @@ class FakeInAppUpdateManager(
             fakeAppUpdateManager.startUpdateFlowForResult(
               inAppUpdateInfo.appUpdateInfo, activity, updateOptions, InAppUpdateType.REQUEST_CODE_IMMEDIATE_UPDATE
             )
+            // Since the fake updater does not trigger onActivityResult, we have to manually trigger the RESULT_OK callback.
+            continuation.resume(InAppActivityResult(requestCode = InAppUpdateType.REQUEST_CODE_IMMEDIATE_UPDATE, RESULT_OK, null))
           } else {
             continuation.resumeWithException(InAppUpdateException.ImmediateUpdateNotAllowedException(message = "Immediate update not allowed"))
           }
@@ -90,6 +88,8 @@ class FakeInAppUpdateManager(
             fakeAppUpdateManager.startUpdateFlowForResult(
               inAppUpdateInfo.appUpdateInfo, activity, updateOptions, InAppUpdateType.REQUEST_CODE_FLEXIBLE_UPDATE
             )
+            // Since the fake updater does not trigger onActivityResult, we have to manually trigger the RESULT_OK callback.
+            continuation.resume(InAppActivityResult(requestCode = InAppUpdateType.REQUEST_CODE_FLEXIBLE_UPDATE, RESULT_OK, null))
           } else {
             continuation.resumeWithException(InAppUpdateException.FlexibleUpdateNotAllowedException(message = "Flexible update not allowed"))
           }
@@ -113,10 +113,6 @@ class FakeInAppUpdateManager(
         InAppUpdateInstallState(installState).also {
           currentInAppUpdateInstallState = it
           trySend(it)
-
-          if (it.isDownloaded()) {
-            close()
-          }
         }
       }
     }
@@ -211,6 +207,15 @@ class FakeInAppUpdateManager(
   suspend fun downloadStarts() = suspendCoroutine {
     try {
       fakeAppUpdateManager.downloadStarts()
+      it.resume(Unit)
+    } catch (e: Exception) {
+      it.resumeWithException(InAppUpdateException.UnExpectedException(message = e.message))
+    }
+  }
+
+  suspend fun userCancelsDownload() = suspendCoroutine {
+    try {
+      fakeAppUpdateManager.userCancelsDownload()
       it.resume(Unit)
     } catch (e: Exception) {
       it.resumeWithException(InAppUpdateException.UnExpectedException(message = e.message))

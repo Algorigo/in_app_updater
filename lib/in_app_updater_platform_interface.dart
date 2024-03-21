@@ -2,6 +2,7 @@ import 'package:in_app_updater/data/in_app_update_info.dart';
 import 'package:in_app_updater/data/in_app_update_install_state.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
+import 'data/app_update_type.dart';
 import 'in_app_updater_method_channel.dart';
 
 abstract class InAppUpdaterPlatform extends PlatformInterface {
@@ -73,7 +74,7 @@ abstract class InAppUpdaterPlatform extends PlatformInterface {
     throw UnimplementedError('fakeCompleteFlexibleUpdate() has not been implemented.');
   }
 
-  Future<void> fakeSetUpdateAvailable(int isAvailable) {
+  Future<void> fakeSetUpdateAvailable(int availableVersionCode, AppUpdateType appUpdateType) {
     throw UnimplementedError('fakeSetUpdateAvailable() has not been implemented.');
   }
 
@@ -111,6 +112,10 @@ abstract class InAppUpdaterPlatform extends PlatformInterface {
 
   Future<void> fakeDownloadStarts() {
     throw UnimplementedError('fakeDownloadStarts() has not been implemented.');
+  }
+
+  Future<void> fakeUserCancelsDownload() {
+    throw UnimplementedError('fakeUserCancelsDownload() has not been implemented.');
   }
 
   Future<void> fakeDownloadCompletes() {
