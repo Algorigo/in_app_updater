@@ -11,7 +11,6 @@ import com.algorigo.in_app_updater.InAppUpdateType.Companion.REQUEST_CODE_IMMEDI
 import com.algorigo.in_app_updater.callbacks.OnActivityResultListener
 import com.algorigo.in_app_updater.exceptions.InAppUpdateException
 import com.google.android.play.core.appupdate.AppUpdateManager
-import com.google.android.play.core.appupdate.AppUpdateManagerFactory
 import com.google.android.play.core.appupdate.AppUpdateOptions
 import com.google.android.play.core.install.InstallStateUpdatedListener
 import com.google.android.play.core.install.model.AppUpdateType
@@ -104,10 +103,6 @@ class InAppUpdateManagerImpl(
         InAppUpdateInstallState(installState).also {
           currentInAppUpdateInstallState = it
           trySend(it)
-
-          if (it.isDownloaded()) {
-            close()
-          }
         }
       }
     }
