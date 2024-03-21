@@ -6,24 +6,15 @@ import android.app.Activity.RESULT_OK
 import android.app.Application
 import android.content.Intent
 import android.os.Bundle
+import com.algorigo.in_app_updater.InAppUpdateType.Companion.REQUEST_CODE_FLEXIBLE_UPDATE
+import com.algorigo.in_app_updater.InAppUpdateType.Companion.REQUEST_CODE_IMMEDIATE_UPDATE
 import com.algorigo.in_app_updater.exceptions.InAppUpdateException
 import com.algorigo.in_app_updater.exceptions.OnActivityResultException
-import com.algorigo.in_app_updater.InAppUpdateType.Companion.REQUEST_CODE_IMMEDIATE_UPDATE
-import com.algorigo.in_app_updater.InAppUpdateType.Companion.REQUEST_CODE_FLEXIBLE_UPDATE
 import com.algorigo.in_app_updater.fake.FakeInAppUpdateManager
 import com.algorigo.in_app_updater.impl.InAppUpdateManagerImpl
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory
-import com.google.android.play.core.appupdate.AppUpdateOptions
 import com.google.android.play.core.appupdate.testing.FakeAppUpdateManager
 import com.google.android.play.core.install.model.ActivityResult
-import com.google.android.play.core.install.model.AppUpdateType
-import com.google.android.play.core.install.model.UpdateAvailability
-import com.google.android.play.core.ktx.bytesDownloaded
-import com.google.android.play.core.ktx.hasTerminalStatus
-import com.google.android.play.core.ktx.installStatus
-import com.google.android.play.core.ktx.packageName
-import com.google.android.play.core.ktx.totalBytesToDownload
-import com.google.android.play.core.ktx.updatePriority
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
@@ -36,6 +27,7 @@ import io.flutter.plugin.common.PluginRegistry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -50,7 +42,7 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Plug
   private lateinit var eventChannel: EventChannel
   private lateinit var fakeEventChannel: EventChannel
 
-  private var activity: Activity? = null
+  private var activityPluginBinding: ActivityPluginBinding? = null
 
   private var inAppUpdateManager: InAppUpdateManager? = null
   private var fakeInAppUpdateManager: FakeInAppUpdateManager? = null
@@ -86,6 +78,9 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Plug
       override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
         fakeEventScope.launch {
           fakeInAppUpdateManager?.observeInAppUpdateInstallState()
+            ?.catch {
+              events?.error(it.cause.toString(), "observe install state error: $it", null)
+            }
             ?.collectLatest {
               events?.success(it.toMap())
             }
@@ -103,7 +98,9 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Plug
   }
 
   override fun onAttachedToActivity(binding: ActivityPluginBinding) {
-    activity = binding.activity
+    binding.addActivityResultListener(this)
+    binding.activity.application?.registerActivityLifecycleCallbacks(this)
+    activityPluginBinding = binding
     inAppUpdateManager = InAppUpdateManagerImpl(binding.activity, AppUpdateManagerFactory.create(binding.activity))
     fakeInAppUpdateManager = FakeInAppUpdateManager(binding.activity, FakeAppUpdateManager(binding.activity))
   }
@@ -113,7 +110,7 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Plug
   }
 
   override fun onDetachedFromActivity() {
-    activity = null
+    activityPluginBinding?.removeActivityResultListener(this)
     inAppUpdateManager = null
     fakeInAppUpdateManager = null
   }
@@ -196,7 +193,7 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Plug
       REQUEST_CODE_FLEXIBLE_UPDATE -> {
         when (inAppActivityResult.resultCode) {
           RESULT_OK -> {
-            result?.success(Unit)
+            result?.success(null)
           }
 
           RESULT_CANCELED -> {
@@ -222,12 +219,12 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Plug
   }
 
   private fun checkForUpdate(inAppUpdateManager: InAppUpdateManager?, result: Result) {
-    mainScope.launch(Dispatchers.Main) {
+    mainScope.launch {
       try {
         val appUpdateInfo = inAppUpdateManager?.checkForUpdate()
         result.success(appUpdateInfo?.toMap())
       } catch (e: InAppUpdateException) {
-        result.error(e.code.toString(), e.message, null)
+        result.error(e.code.toString(), e.toString(), null)
       } catch (e: Exception) {
         result.error("fetch app update info failed", e.message, null)
       }
@@ -249,9 +246,9 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Plug
           onActivityResult(result, it)
         }
       } catch (e: InAppUpdateException) {
-        result?.error(e.code.toString(), e.message, null)
+        result?.error(e.code.toString(), e.toString(), null)
       } catch (e: Exception) {
-        result?.error(e.message.toString(), e.cause.toString(), null)
+        result?.error(e.message.toString(), e.toString(), null)
       }
     }
   }
@@ -264,9 +261,9 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Plug
           onActivityResult(result, it)
         }
       } catch (e: InAppUpdateException) {
-        result.error(e.code.toString(), e.message, null)
+        result.error(e.code.toString(), e.toString(), null)
       } catch (e: Exception) {
-        result.error(e.message.toString(), e.cause.toString(), null)
+        result.error(e.message.toString(), e.toString(), null)
       }
     }
   }
@@ -277,9 +274,9 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Plug
         inAppUpdateManager?.requestCompleteUpdate()
         result.success(null)
       } catch (e: InAppUpdateException) {
-        result.error(e.code.toString(), e.message, e.stackTrace)
+        result.error(e.code.toString(), e.toString(), e.stackTrace)
       } catch (e: Exception) {
-        result.error(e.message.toString(), e.cause.toString(), null)
+        result.error(e.message.toString(), e.toString(), null)
       }
     }
   }
@@ -287,14 +284,19 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Plug
   private fun fakeSetUpdateAvailable(call: MethodCall, result: Result) {
     mainScope.launch {
       try {
-        val availability = call.arguments as Int?
-        requireNotNull(availability) { "availability is required" }
-        fakeInAppUpdateManager?.setUpdateAvailable(availability)
+        val arguments = call.arguments as Map<*, *>?
+        val availableVersionCode = arguments?.get("availableVersionCode") as Int?
+        val appUpdateType = arguments?.get("appUpdateType") as Int?
+
+        requireNotNull(availableVersionCode) { "availableVersionCode is required" }
+        requireNotNull(appUpdateType) { "appUpdateType is required" }
+
+        fakeInAppUpdateManager?.setUpdateAvailable(availableVersionCode, appUpdateType)
         result.success(null)
       } catch (e: InAppUpdateException) {
-        result.error(e.code.toString(), e.message, e.stackTrace)
+        result.error(e.code.toString(), e.toString(), e.stackTrace)
       } catch (e: Exception) {
-        result.error(e.message.toString(), e.cause.toString(), null)
+        result.error(e.message.toString(), e.toString(), null)
       }
     }
   }
@@ -305,9 +307,9 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Plug
         fakeInAppUpdateManager?.setUpdateNotAvailable()
         result.success(null)
       } catch (e: InAppUpdateException) {
-        result.error(e.code.toString(), e.message, e.stackTrace)
+        result.error(e.code.toString(), e.toString(), e.stackTrace)
       } catch (e: Exception) {
-        result.error(e.message.toString(), e.cause.toString(), null)
+        result.error(e.message.toString(), e.toString(), null)
       }
     }
   }
@@ -318,9 +320,9 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Plug
         fakeInAppUpdateManager?.userAcceptsUpdate()
         result.success(null)
       } catch (e: InAppUpdateException) {
-        result.error(e.code.toString(), e.message, e.stackTrace)
+        result.error(e.code.toString(), e.toString(), e.stackTrace)
       } catch (e: Exception) {
-        result.error(e.message.toString(), e.cause.toString(), null)
+        result.error(e.message.toString(), e.toString(), null)
       }
     }
   }
@@ -331,9 +333,9 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Plug
         fakeInAppUpdateManager?.userRejectsUpdate()
         result.success(null)
       } catch (e: InAppUpdateException) {
-        result.error(e.code.toString(), e.message, e.stackTrace)
+        result.error(e.code.toString(), e.toString(), e.stackTrace)
       } catch (e: Exception) {
-        result.error(e.message.toString(), e.cause.toString(), null)
+        result.error(e.message.toString(), e.toString(), null)
       }
     }
   }
@@ -341,14 +343,14 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Plug
   private fun fakeSetUpdatePriority(call: MethodCall, result: Result) {
     mainScope.launch {
       try {
-        val priority = call.argument<Int>("priority")
+        val priority = call.arguments as Int?
         requireNotNull(priority) { "priority is required" }
         fakeInAppUpdateManager?.setUpdatePriority(priority)
         result.success(null)
       } catch (e: InAppUpdateException) {
-        result.error(e.code.toString(), e.message, e.stackTrace)
+        result.error(e.code.toString(), e.toString(), e.stackTrace)
       } catch (e: Exception) {
-        result.error(e.message.toString(), e.cause.toString(), null)
+        result.error(e.message.toString(), e.toString(), null)
       }
     }
   }
@@ -356,14 +358,14 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Plug
   private fun fakeSetClientVersionStalenessDays(call: MethodCall, result: Result) {
     mainScope.launch {
       try {
-        val days = call.argument<Int>("stalenessDays")
+        val days = call.arguments as? Int
         requireNotNull(days) { "stalenessDays is required" }
         fakeInAppUpdateManager?.setClientVersionStalenessDays(days)
         result.success(null)
       } catch (e: InAppUpdateException) {
-        result.error(e.code.toString(), e.message, e.stackTrace)
+        result.error(e.code.toString(), e.toString(), e.stackTrace)
       } catch (e: Exception) {
-        result.error(e.message.toString(), e.cause.toString(), null)
+        result.error(e.message.toString(), e.toString(), null)
       }
     }
   }
@@ -374,9 +376,9 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Plug
         val type = fakeInAppUpdateManager?.getTypeForUpdate()
         result.success(type?.value)
       } catch (e: InAppUpdateException) {
-        result.error(e.code.toString(), e.message, e.stackTrace)
+        result.error(e.code.toString(), e.toString(), e.stackTrace)
       } catch (e: Exception) {
-        result.error(e.message.toString(), e.cause.toString(), null)
+        result.error(e.message.toString(), e.toString(), null)
       }
     }
   }
@@ -384,14 +386,14 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Plug
   private fun fakeSetTotalBytesToDownload(methodCall: MethodCall, result: Result) {
     mainScope.launch {
       try {
-        val bytes = methodCall.argument<Long>("totalBytesToDownload")
+        val bytes = methodCall.arguments as? Int
         requireNotNull(bytes) { "totalBytesToDownload is required" }
-        fakeInAppUpdateManager?.setTotalBytesToDownload(bytes)
+        fakeInAppUpdateManager?.setTotalBytesToDownload(bytes.toLong())
         result.success(null)
       } catch (e: InAppUpdateException) {
-        result.error(e.code.toString(), e.message, e.stackTrace)
+        result.error(e.code.toString(), e.toString(), e.stackTrace)
       } catch (e: Exception) {
-        result.error(e.message.toString(), e.cause.toString(), null)
+        result.error(e.message.toString(), e.toString(), null)
       }
     }
   }
@@ -399,14 +401,14 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Plug
   private fun fakeSetBytesDownloaded(methodCall: MethodCall, result: Result) {
     mainScope.launch {
       try {
-        val bytes = methodCall.argument<Long>("bytesDownloaded")
+        val bytes = methodCall.arguments as Int?
         requireNotNull(bytes) { "bytesDownloaded is required" }
-        fakeInAppUpdateManager?.setBytesDownloaded(bytes)
+        fakeInAppUpdateManager?.setBytesDownloaded(bytes.toLong())
         result.success(null)
       } catch (e: InAppUpdateException) {
-        result.error(e.code.toString(), e.message, e.stackTrace)
+        result.error(e.code.toString(), e.toString(), e.stackTrace)
       } catch (e: Exception) {
-        result.error(e.message.toString(), e.cause.toString(), null)
+        result.error(e.message.toString(), e.toString(), null)
       }
     }
   }
@@ -417,7 +419,12 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Plug
         fakeInAppUpdateManager?.downloadStarts()
         result.success(null)
       } catch (e: InAppUpdateException) {
-        result.error(e.code.toString(), e.message, e.stackTrace)
+        result.error(e.code.toString(), e.toString(), e.stackTrace)
+      } catch (e: Exception) {
+        result.error(e.message.toString(), e.toString(), null)
+      }
+    }
+  }
 
   private fun fakeUserCancelsDownload(result: Result) {
     mainScope.launch {
@@ -438,9 +445,9 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Plug
         fakeInAppUpdateManager?.downloadCompletes()
         result.success(null)
       } catch (e: InAppUpdateException) {
-        result.error(e.code.toString(), e.message, e.stackTrace)
+        result.error(e.code.toString(), e.toString(), e.stackTrace)
       } catch (e: Exception) {
-        result.error(e.message.toString(), e.cause.toString(), null)
+        result.error(e.message.toString(), e.toString(), null)
       }
     }
   }
@@ -451,9 +458,9 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Plug
         fakeInAppUpdateManager?.downloadFails()
         result.success(null)
       } catch (e: InAppUpdateException) {
-        result.error(e.code.toString(), e.message, e.stackTrace)
+        result.error(e.code.toString(), e.toString(), e.stackTrace)
       } catch (e: Exception) {
-        result.error(e.message.toString(), e.cause.toString(), null)
+        result.error(e.message.toString(), e.toString(), null)
       }
     }
   }
@@ -464,9 +471,9 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Plug
         fakeInAppUpdateManager?.installCompletes()
         result.success(null)
       } catch (e: InAppUpdateException) {
-        result.error(e.code.toString(), e.message, e.stackTrace)
+        result.error(e.code.toString(), e.toString(), e.stackTrace)
       } catch (e: Exception) {
-        result.error(e.message.toString(), e.cause.toString(), null)
+        result.error(e.message.toString(), e.toString(), null)
       }
     }
   }
@@ -477,9 +484,9 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Plug
         fakeInAppUpdateManager?.installFails()
         result.success(null)
       } catch (e: InAppUpdateException) {
-        result.error(e.code.toString(), e.message, e.stackTrace)
+        result.error(e.code.toString(), e.toString(), e.stackTrace)
       } catch (e: Exception) {
-        result.error(e.message.toString(), e.cause.toString(), null)
+        result.error(e.message.toString(), e.toString(), null)
       }
     }
   }
@@ -487,14 +494,14 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Plug
   private fun fakeSetInstallErrorCode(call: MethodCall, result: Result) {
     mainScope.launch {
       try {
-        val errorCode = call.argument<Int>("errorCode")
+        val errorCode = call.arguments as? Int
         requireNotNull(errorCode) { "errorCode is required" }
         fakeInAppUpdateManager?.setInstallErrorCode(errorCode)
         result.success(null)
       } catch (e: InAppUpdateException) {
-        result.error(e.code.toString(), e.message, e.stackTrace)
+        result.error(e.code.toString(), e.toString(), e.stackTrace)
       } catch (e: Exception) {
-        result.error(e.message.toString(), e.cause.toString(), null)
+        result.error(e.message.toString(), e.toString(), null)
       }
     }
   }
