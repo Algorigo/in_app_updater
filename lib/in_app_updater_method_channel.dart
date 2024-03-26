@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:in_app_updater/data/in_app_update_install_state.dart';
-import 'package:in_app_updater/extensions/in_app_update_extensions.dart';
 
 import 'data/app_update_type.dart';
 import 'data/in_app_update_info.dart';
