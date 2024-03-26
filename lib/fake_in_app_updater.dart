@@ -1,6 +1,8 @@
+import 'package:flutter/services.dart';
 import 'package:in_app_updater/data/app_update_type.dart';
 import 'package:in_app_updater/data/in_app_update_info.dart';
 import 'package:in_app_updater/data/in_app_update_install_state.dart';
+import 'package:in_app_updater/result/in_app_update_result.dart';
 
 import 'in_app_updater_platform_interface.dart';
 
@@ -14,11 +16,23 @@ class FakeInAppUpdater {
   }
 
   Future<void> startUpdateImmediate() {
-    return InAppUpdaterPlatform.instance.fakeStartUpdateImmediate();
+    return InAppUpdaterPlatform.instance.fakeStartUpdateImmediate().onError((error, stackTrace) {
+      if (error is PlatformException) {
+        if (InAppUpdateResult.of(error.code, error.message, error.details) != null) {
+          throw InAppUpdateResult.of(error.code, error.message, error.details)!;
+        }
+      }
+    });
   }
 
   Future<void> startUpdateFlexible() {
-    return InAppUpdaterPlatform.instance.fakeStartUpdateFlexible();
+    return InAppUpdaterPlatform.instance.fakeStartUpdateFlexible().onError((error, stackTrace) {
+      if (error is PlatformException) {
+        if (InAppUpdateResult.of(error.code, error.message, error.details) != null) {
+          throw InAppUpdateResult.of(error.code, error.message, error.details)!;
+        }
+      }
+    });
   }
 
   Future<void> completeFlexibleUpdate() {
