@@ -16,7 +16,9 @@ class InAppUpdater {
   }
 
   Future<bool> checkUpdateAvailable() {
-    return InAppUpdaterPlatform.instance.checkUpdateAvailable();
+    return InAppUpdaterPlatform.instance
+        .checkUpdateAvailable()
+        .onError((error, stackTrace) => Future.value(false));
   }
 
   Future<void> startUpdateImmediate() {
