@@ -17,6 +17,10 @@ sealed class InAppUpdateException(
 
   data class CompleteFlexibleUpdateException(override val code: Int = COMPLETE_FLEXIBLE_UPDATE_EXCEPTION_CODE, override val message: String?) : InAppUpdateException(code, message)
 
+  data class PlayStoreNotInstalledException(override val code: Int = PLAY_STORE_NOT_INSTALLED_EXCEPTION_CODE, override val message: String?) : InAppUpdateException(code, message)
+
+  data class PlayStoreNotAvailableException(override val code: Int = PLAY_STORE_NOT_AVAILABLE_EXCEPTION_CODE, override val message: String?) : InAppUpdateException(code, message)
+
   override fun toString(): String {
     return "${this.javaClass.simpleName} message=$message"
   }
@@ -28,5 +32,7 @@ sealed class InAppUpdateException(
     const val IMMEDIATE_UPDATE_NOT_ALLOWED_EXCEPTION_CODE = 5704
     const val FLEXIBLE_UPDATE_NOT_ALLOWED_EXCEPTION_CODE = 5705
     const val COMPLETE_FLEXIBLE_UPDATE_EXCEPTION_CODE = 5706
+    const val PLAY_STORE_NOT_INSTALLED_EXCEPTION_CODE = 5707
+    const val PLAY_STORE_NOT_AVAILABLE_EXCEPTION_CODE = 5708
   }
 }

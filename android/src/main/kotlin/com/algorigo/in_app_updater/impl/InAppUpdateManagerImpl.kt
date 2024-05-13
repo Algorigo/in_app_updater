@@ -23,94 +23,101 @@ import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
 class InAppUpdateManagerImpl(
-  private val activity: Activity,
-  private val appUpdateManager: AppUpdateManager
+    private val activity: Activity,
+    private val appUpdateManager: AppUpdateManager
 ) : InAppUpdateManager() {
 
-  override suspend fun checkUpdateAvailable() = suspendCoroutine {
-    // re-fetch app update info
-    appUpdateManager.appUpdateInfo.addOnSuccessListener { appUpdateInfo ->
-      it.resume(InAppUpdateInfo(appUpdateInfo).isUpdateAvailable())
-    }
-  }
-
-  override suspend fun checkForUpdate(): InAppUpdateInfo = suspendCoroutine { continuation ->
-    try {
-      appUpdateManager.appUpdateInfo.addOnSuccessListener { appUpdateInfo ->
-        continuation.resume(InAppUpdateInfo(appUpdateInfo))
-      }.addOnFailureListener {
-        continuation.resumeWithException(InAppUpdateException.CheckForUpdateFailedException(message = it.message))
-      }
-    } catch (e: Exception) {
-      continuation.resumeWithException(InAppUpdateException.UnExpectedException(message = e.message))
-    }
-  }
-
-  override suspend fun startUpdate(inAppUpdateType: InAppUpdateType): InAppActivityResult {
-
-    val inAppUpdateInfo = checkForUpdate()
-
-    return suspendCoroutine { continuation ->
-      val listener = OnActivityResultListener { activityResult ->
-        continuation.resume(activityResult)
-      }
-
-      setOnActivityResultListener(listener)
-
-      if (inAppUpdateInfo.isUpdateAvailable().not()) {
-        continuation.resumeWithException(InAppUpdateException.UpdateNotAvailableException(message = "Update not available"))
-        return@suspendCoroutine
-      }
-
-      when (inAppUpdateType) {
-        InAppUpdateType.IMMEDIATE -> {
-          if (inAppUpdateInfo.isImmediateUpdateAllowed) {
-            val updateOptions = AppUpdateOptions.newBuilder(AppUpdateType.IMMEDIATE).build()
-            appUpdateManager.startUpdateFlowForResult(
-              inAppUpdateInfo.appUpdateInfo, activity, updateOptions, REQUEST_CODE_IMMEDIATE_UPDATE
-            )
-          } else {
-            continuation.resumeWithException(InAppUpdateException.ImmediateUpdateNotAllowedException(message = "Immediate update not allowed"))
-          }
+    override suspend fun checkForUpdate(): InAppUpdateInfo = suspendCoroutine { continuation ->
+        if (isPlayStoreInstalled().not()) {
+            continuation.resumeWithException(InAppUpdateException.PlayStoreNotInstalledException(message = "Play Store not installed"))
+            return@suspendCoroutine
         }
 
-        InAppUpdateType.FLEXIBLE -> {
-          if (inAppUpdateInfo.isFlexibleUpdateAllowed) {
-            val updateOptions = AppUpdateOptions.newBuilder(AppUpdateType.FLEXIBLE).build()
-            appUpdateManager.startUpdateFlowForResult(
-              inAppUpdateInfo.appUpdateInfo, activity, updateOptions, REQUEST_CODE_FLEXIBLE_UPDATE
-            )
-          } else {
-            continuation.resumeWithException(InAppUpdateException.FlexibleUpdateNotAllowedException(message = "Flexible update not allowed"))
-          }
+        if (isPlayServicesAvailable().not()) {
+            continuation.resumeWithException(InAppUpdateException.PlayStoreNotAvailableException(message = "Play Services not available"))
+            return@suspendCoroutine
         }
-      }
-    }
-  }
 
-  override suspend fun requestCompleteUpdate() {
-    try {
-      appUpdateManager.requestCompleteUpdate()
-    } catch (e: Exception) {
-      throw InAppUpdateException.CompleteFlexibleUpdateException(message = e.message)
-    }
-  }
-
-  override fun observeInAppUpdateInstallState(): Flow<InAppUpdateInstallState> = callbackFlow {
-    var currentInAppUpdateInstallState: InAppUpdateInstallState? = null
-    val installStateUpdatedListener = InstallStateUpdatedListener { installState ->
-      if (currentInAppUpdateInstallState?.installState?.installStatus() != installState.installStatus()) {
-        InAppUpdateInstallState(installState).also {
-          currentInAppUpdateInstallState = it
-          trySend(it)
+        try {
+            appUpdateManager.appUpdateInfo.addOnSuccessListener { appUpdateInfo ->
+                continuation.resume(InAppUpdateInfo(appUpdateInfo))
+            }.addOnFailureListener {
+                continuation.resumeWithException(InAppUpdateException.CheckForUpdateFailedException(message = it.message))
+            }
+        } catch (e: Exception) {
+            continuation.resumeWithException(InAppUpdateException.UnExpectedException(message = e.message))
         }
-      }
     }
 
-    appUpdateManager.registerListener(installStateUpdatedListener)
-
-    awaitClose {
-      appUpdateManager.unregisterListener(installStateUpdatedListener)
+    override suspend fun checkUpdateAvailable(): Boolean {
+        val inAppUpdateInfo = checkForUpdate()
+        return inAppUpdateInfo.isUpdateAvailable()
     }
-  }
+
+    override suspend fun startUpdate(inAppUpdateType: InAppUpdateType): InAppActivityResult {
+        val inAppUpdateInfo = checkForUpdate()
+
+        return suspendCoroutine { continuation ->
+            val listener = OnActivityResultListener { activityResult ->
+                continuation.resume(activityResult)
+            }
+
+            setOnActivityResultListener(listener)
+
+            if (inAppUpdateInfo.isUpdateAvailable().not()) {
+                continuation.resumeWithException(InAppUpdateException.UpdateNotAvailableException(message = "Update not available"))
+                return@suspendCoroutine
+            }
+
+            when (inAppUpdateType) {
+                InAppUpdateType.IMMEDIATE -> {
+                    if (inAppUpdateInfo.isImmediateUpdateAllowed) {
+                        val updateOptions = AppUpdateOptions.newBuilder(AppUpdateType.IMMEDIATE).build()
+                        appUpdateManager.startUpdateFlowForResult(
+                            inAppUpdateInfo.appUpdateInfo, activity, updateOptions, REQUEST_CODE_IMMEDIATE_UPDATE
+                        )
+                    } else {
+                        continuation.resumeWithException(InAppUpdateException.ImmediateUpdateNotAllowedException(message = "Immediate update not allowed"))
+                    }
+                }
+
+                InAppUpdateType.FLEXIBLE -> {
+                    if (inAppUpdateInfo.isFlexibleUpdateAllowed) {
+                        val updateOptions = AppUpdateOptions.newBuilder(AppUpdateType.FLEXIBLE).build()
+                        appUpdateManager.startUpdateFlowForResult(
+                            inAppUpdateInfo.appUpdateInfo, activity, updateOptions, REQUEST_CODE_FLEXIBLE_UPDATE
+                        )
+                    } else {
+                        continuation.resumeWithException(InAppUpdateException.FlexibleUpdateNotAllowedException(message = "Flexible update not allowed"))
+                    }
+                }
+            }
+        }
+    }
+
+    override suspend fun requestCompleteUpdate() {
+        try {
+            appUpdateManager.requestCompleteUpdate()
+        } catch (e: Exception) {
+            throw InAppUpdateException.CompleteFlexibleUpdateException(message = e.message)
+        }
+    }
+
+    override fun observeInAppUpdateInstallState(): Flow<InAppUpdateInstallState> = callbackFlow {
+        var currentInAppUpdateInstallState: InAppUpdateInstallState? = null
+        val installStateUpdatedListener = InstallStateUpdatedListener { installState ->
+            if (currentInAppUpdateInstallState?.installState?.installStatus() != installState.installStatus()) {
+                InAppUpdateInstallState(installState).also {
+                    currentInAppUpdateInstallState = it
+                    trySend(it)
+                }
+            }
+        }
+
+        appUpdateManager.registerListener(installStateUpdatedListener)
+
+        awaitClose {
+            appUpdateManager.unregisterListener(installStateUpdatedListener)
+        }
+    }
 }

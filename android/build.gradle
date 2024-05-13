@@ -53,6 +53,7 @@ android {
         implementation 'com.google.android.play:app-update:2.1.0'
         implementation 'com.google.android.play:app-update-ktx:2.1.0'
         implementation ("androidx.activity:activity-ktx:1.8.2")
+        implementation 'com.google.android.gms:play-services-base:18.4.0'
 
         testImplementation 'org.jetbrains.kotlin:kotlin-test'
         testImplementation 'org.mockito:mockito-core:5.0.0'

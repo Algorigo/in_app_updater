@@ -6,6 +6,7 @@ import android.app.Activity.RESULT_OK
 import android.app.Application
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import com.algorigo.in_app_updater.InAppUpdateType.Companion.REQUEST_CODE_FLEXIBLE_UPDATE
 import com.algorigo.in_app_updater.InAppUpdateType.Companion.REQUEST_CODE_IMMEDIATE_UPDATE
 import com.algorigo.in_app_updater.exceptions.InAppUpdateException
@@ -233,8 +234,12 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Plug
 
   private fun checkUpdateAvailable(inAppUpdateManager: InAppUpdateManager?, result: Result) {
     mainScope.launch(Dispatchers.Main) {
-      val available = inAppUpdateManager?.checkUpdateAvailable()
-      result.success(available)
+      try {
+        val available = inAppUpdateManager?.checkUpdateAvailable()
+        result.success(available)
+      } catch (e: Exception) {
+        result.error("check update available failed", e.message, null)
+      }
     }
   }
 
@@ -531,19 +536,29 @@ class InAppUpdaterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Plug
 
   override fun onActivityResumed(activity: Activity) {
     mainScope.launch {
-      inAppUpdateManager?.checkForUpdate()?.also { inAppUpdateInfo ->
-        if (inAppUpdateInfo.isUpdateInProgress()) {
+      try {
+        val checkForUpdate = inAppUpdateManager?.checkForUpdate()
+        if (checkForUpdate?.isUpdateInProgress() == true) {
           startUpdateImmediate(inAppUpdateManager, lastResult)
         }
+      } catch (e: Exception) {
+        Log.d(TAG, "onActivityResumed checkForUpdate, startUpdate error: $e")
       }
     }
 
     mainScope.launch {
-      fakeInAppUpdateManager?.checkForUpdate()?.also { inAppUpdateInfo ->
-        if (inAppUpdateInfo.isUpdateInProgress()) {
+      try {
+        val checkForUpdate = inAppUpdateManager?.checkForUpdate()
+        if (checkForUpdate?.isUpdateInProgress() == true) {
           startUpdateImmediate(fakeInAppUpdateManager, lastResult)
         }
+      } catch (e: Exception) {
+        Log.d(TAG, "onActivityResumed test checkForUpdate, startUpdate error: $e")
       }
     }
+  }
+
+  companion object {
+    private val TAG = InAppUpdaterPlugin::class.java.simpleName
   }
 }

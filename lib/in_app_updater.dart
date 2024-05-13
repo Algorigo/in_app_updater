@@ -1,4 +1,3 @@
-
 import 'package:flutter/services.dart';
 import 'package:in_app_updater/data/in_app_update_info.dart';
 import 'package:in_app_updater/data/in_app_update_install_state.dart';
@@ -16,9 +15,10 @@ class InAppUpdater {
   }
 
   Future<bool> checkUpdateAvailable() {
-    return InAppUpdaterPlatform.instance
-        .checkUpdateAvailable()
-        .onError((error, stackTrace) => Future.value(false));
+    return InAppUpdaterPlatform.instance.checkUpdateAvailable()
+        .catchError((error) {
+      return Future.value(false);
+    });
   }
 
   Future<void> startUpdateImmediate() {
